@@ -102,7 +102,7 @@
         <b>(a)</b> One training step for \((T,B)=(4,2)\): \(T\) forward loops, of which the last \(B\) are trained.
         <b>(b)</b> At \(8D_0\) tokens, loops add effective parameters while truncation discounts them (lines: law, markers: runs).
         <b>(c)</b> At a fixed size (120M), the optimal \(T\) grows with compute under full BPTT.
-        <b>(d)</b> \((2,2)\) at 344M beats \((1,1)\) at 480M and \(2.1\times10^{19}\) FLOPs in loss (2.36 vs. 2.37 nats) with 27% fewer parameters and 8% more compute.
+        <b>(d)</b> \((2,2)\) at 344M beats \((1,1)\) at 471M and \(2.1\times10^{19}\) FLOPs in loss (2.36 vs. 2.37 nats) with 27% fewer parameters and 8% more compute.
       </figcaption>
     </figure>
   </div>
@@ -131,19 +131,18 @@
       <summary>Abstract</summary>
       <p>
         Looped transformers reuse a shared block of layers to increase computational depth without increasing the number of
-        trainable parameters. Training uses backpropagation through time (BPTT), either through all loops or through only the
-        last part of the recurrence. Truncating backpropagation saves training compute and activation memory, but can reduce
-        the gains from looping. Across nearly 600 training runs spanning over three orders of magnitude in training tokens per
-        parameter, we study how model size, training tokens, and forward and backward loop counts jointly determine loss, and
-        fit a unified scaling law that captures the effects of looping and truncation through <em>effective parameters</em>.
-        Despite the training-compute savings of truncation, our fitted law favors <strong>full BPTT</strong> when forward and
-        backward loop counts are jointly optimized. In <span class="nowrap">matched-compute</span> comparisons spanning 58M&ndash;919M non-embedding
-        parameters and up to 300 training tokens per parameter, full BPTT through fewer loops consistently outperforms
-        truncated settings of the same compute. Using this law, we further show that at fixed model size, <span class="nowrap">compute-optimal</span>
-        training increases both the loop count and the training-token budget as compute grows. When model size is also free,
-        the law identifies two fully trained loops as the best looped setting. Experimentally, this setting achieves lower loss
-        than the <span class="nowrap">compute-optimal</span> non-looped model with about <strong>27% fewer non-embedding parameters</strong> and only 8%
-        more training compute.
+        trainable parameters. They are trained with backpropagation through time (BPTT). To save training compute, BPTT is
+        often truncated to the last few loops, although this may weaken the benefit of looping. To study this tradeoff
+        systematically, we jointly vary model size, training tokens, and forward and backward loop counts across nearly 600
+        training runs and fit a unified scaling law that captures the effects of looping and truncation through
+        <em>effective parameters</em>. Despite the training-compute savings of truncation, our fitted law favors
+        <strong>full BPTT</strong> when forward and backward loop counts are jointly optimized. In
+        <span class="nowrap">matched-compute</span> runs, full BPTT through fewer loops consistently outperforms truncated
+        settings of the same compute. The law further shows that at fixed model size, the <span class="nowrap">compute-optimal</span>
+        loop count and training-token budget both grow with compute. When model size is also free, the law identifies two
+        fully trained loops as the best looped setting. Experimentally, this setting achieves lower loss than the
+        <span class="nowrap">compute-optimal</span> non-looped model with about <strong>27% fewer non-embedding parameters</strong>
+        and only 8% more training compute.
       </p>
     </details>
   </div>
@@ -205,9 +204,9 @@
             coda \(N_{\mathrm{once}}\) run once.
           </p>
           <p>
-            Each fully trained loop enlarges the effective size of the recurrent block, with diminishing returns toward a finite
-            ceiling. Truncation discounts this gain, and <strong>doubling \(B\) adds more effective parameters than doubling
-            \(T\) alone</strong>.
+            Each fully trained loop adds effective parameters, with diminishing returns toward a finite ceiling. Truncation
+            discounts this gain, and from the same setting, <strong>doubling \(B\) adds more effective parameters than doubling
+            \(T\)</strong>.
           </p>
         </div>
         <div class="takeaway-side">
@@ -333,13 +332,14 @@
     <article class="takeaway accent-teal" id="takeaway-3">
       <header class="takeaway-head">
         <span class="takeaway-num">Takeaway 3</span>
-        <h3>At fixed size, spend additional compute mostly on training tokens</h3>
+        <h3>At fixed model size, spend additional compute mostly on training tokens</h3>
       </header>
       <div class="takeaway-grid">
         <div class="takeaway-text">
           <p>
             When a model must fit a memory budget, extra compute can buy more loops per token or more training tokens. Under the
-            fitted law, the optimal fully trained loop count grows as \(C^{0.24}\) and the token count as \(C^{0.76}\).
+            fitted law, the optimal number of fully trained loops grows as \(C^{0.24}\) and the number of training tokens as
+            \(C^{0.76}\).
           </p>
           <p>
             Loop counts are integers, so the best setting changes in steps: <strong>no looping, then two, then four trained
@@ -388,16 +388,16 @@
           </p>
           <p>
             At equal compute, \((2,2)\) comes within 0.001&ndash;0.008 nats of the <span class="nowrap">compute-optimal</span> non-looped model across three
-            budgets while having 27&ndash;32% fewer non-embedding parameters. <strong>At the largest budget, 8% more compute is
-            enough for it to reach the lower loss.</strong>
+            budgets while having 27&ndash;32% fewer non-embedding parameters. <strong>At \(2.1\times10^{19}\) FLOPs, 8% more
+            compute is enough for it to reach the lower loss.</strong>
           </p>
         </div>
         <div class="takeaway-side">
-          <div class="duel" role="img" aria-label="At 2.1 times 10 to the 19 FLOPs, the 344M two-loop model uses 27 percent fewer parameters and 8 percent more compute than the 480M non-looped model and reaches 2.36 instead of 2.37 nats.">
-            <p class="duel-head">Largest tested budget, \(2.1\times10^{19}\) FLOPs</p>
+          <div class="duel" role="img" aria-label="At 2.1 times 10 to the 19 FLOPs, the 344M two-loop model uses 27 percent fewer parameters and 8 percent more compute than the 471M non-looped model and reaches 2.36 instead of 2.37 nats.">
+            <p class="duel-head">Reference budget, \(2.1\times10^{19}\) FLOPs</p>
             <div class="duel-group">
               <span class="duel-label">Non-embedding parameters</span>
-              <div class="duel-bar base" style="--w: 100%"><span>no looping &middot; 480M</span></div>
+              <div class="duel-bar base" style="--w: 100%"><span>no looping &middot; 471M</span></div>
               <div class="duel-bar loop" style="--w: 73%"><span>loop twice &middot; 344M</span><em>&minus;27%</em></div>
             </div>
             <div class="duel-group">
