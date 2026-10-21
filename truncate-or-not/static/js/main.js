@@ -78,30 +78,6 @@
     sections.forEach(function (s) { observer.observe(s); });
   }
 
-  function initTabs() {
-    document.querySelectorAll(".figtabs").forEach(function (group) {
-      var tabs = Array.prototype.slice.call(group.querySelectorAll('[role="tab"]'));
-      function select(tab, focus) {
-        tabs.forEach(function (t) {
-          var on = t === tab;
-          t.setAttribute("aria-selected", on ? "true" : "false");
-          t.tabIndex = on ? 0 : -1;
-          document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
-        });
-        if (focus) tab.focus();
-      }
-      tabs.forEach(function (tab, i) {
-        tab.addEventListener("click", function () { select(tab, false); });
-        tab.addEventListener("keydown", function (e) {
-          if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-          var step = e.key === "ArrowRight" ? 1 : tabs.length - 1;
-          select(tabs[(i + step) % tabs.length], true);
-          e.preventDefault();
-        });
-      });
-    });
-  }
-
   function initLightbox() {
     var box = document.getElementById("lightbox");
     if (!box) return;
@@ -365,7 +341,6 @@
 
   renderMath();
   initNav();
-  initTabs();
   initLightbox();
   initCopy();
   initExplorer();

@@ -31,11 +31,9 @@
     <a class="brand" href="#top">Truncate or Not?</a>
     <div class="navlinks">
       <a href="#tldr">TL;DR</a>
-      <a href="#contributions">Contributions</a>
-      <a href="#takeaways">Takeaways</a>
+      <a href="#findings">Findings</a>
       <a href="#explorer">Explorer</a>
       <a href="#law">The law</a>
-      <a href="#code">Code</a>
       <a href="#citation">Citation</a>
     </div>
   </div>
@@ -79,10 +77,6 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         arXiv
       </a>
-      <a class="btn" href="https://github.com/xjxyys/Truncate-or-Not">
-        <svg viewBox="0 0 16 16" aria-hidden="true" class="fill"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
-        Code
-      </a>
       <a class="btn" href="#citation">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h4v4H8a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V8a1 1 0 0 1 1-1zM15 7h4v4h-3a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V8a1 1 0 0 1 1-1z"/></svg>
         BibTeX
@@ -115,7 +109,9 @@
         Truncated backpropagation through time (BPTT) trains only the last \(B\) of \(T\) loops of a looped transformer to save compute.
         We fit one scaling law over model size, data and both loop counts, in which loops add <em>effective parameters</em>
         and truncation discounts them. Its answer to the title: <strong>truncate only when the number of forward loops is fixed
-        in advance.</strong> When both loop counts can be chosen, use full BPTT through fewer loops.
+        in advance.</strong> When both loop counts can be chosen, use full BPTT through fewer loops. With model size free as well,
+        the law favors no looping, and two fully trained loops come closest, saving about 30% of the parameters for little
+        extra compute (figure below).
       </p>
     </div>
 
@@ -131,128 +127,74 @@
       <p>
         Looped transformers reuse a shared block of layers to increase computational depth without increasing the number of
         trainable parameters. They are trained with backpropagation through time (BPTT). To save training compute, BPTT is
-        often truncated to the last few loops, although this may weaken the benefit of looping. To study this tradeoff
-        systematically, we jointly vary model size, training tokens, and forward and backward loop counts across nearly 600
-        training runs and fit a unified scaling law that captures the effects of looping and truncation through
-        <em>effective parameters</em>. Despite the training-compute savings of truncation, our fitted law favors
-        <strong>full BPTT</strong> when forward and backward loop counts are jointly optimized. In
-        <span class="nowrap">matched-compute</span> runs, full BPTT through fewer loops consistently outperforms truncated
-        settings of the same compute. The law further shows that at fixed model size, the <span class="nowrap">compute-optimal</span>
-        loop count and training-token budget both grow with compute. When model size is also free, the law identifies two
-        fully trained loops as the best looped setting. Experimentally, this setting achieves lower loss than the
-        <span class="nowrap">compute-optimal</span> non-looped model with about <strong>27% fewer non-embedding parameters</strong>
-        and only 8% more training compute.
+        often truncated to the last few loops, but truncation yields biased gradients that may weaken the benefit of looping.
+        In this work, we study the value of truncation in looped transformer training in a systematic way: we jointly vary
+        model size, training tokens, and forward and backward loop counts across nearly 600 training runs and fit a unified
+        scaling law that captures the effects of looping and truncation through <em>effective parameters</em>. Despite the
+        training-compute savings of truncation, our fitted law favors <strong>full BPTT</strong> when forward and backward loop
+        counts are jointly optimized. In <span class="nowrap">matched-compute</span> runs, full BPTT through fewer loops
+        consistently outperforms truncated settings of the same compute. The law further shows that at fixed model size, the
+        <span class="nowrap">compute-optimal</span> loop count and training-token budget both grow with compute. When model size
+        is also free, the law identifies two fully trained loops as the best looped setting. Experimentally, this setting
+        achieves lower validation loss than the <span class="nowrap">compute-optimal</span> non-looped model with about
+        <strong>27% fewer non-embedding parameters</strong> and only 8% more training compute.
       </p>
     </details>
+
+    <figure class="figure figure-feature" id="loop-settings">
+      <img src="static/images/law_free_size.png" width="2200" height="919" loading="lazy" data-zoom
+           alt="Each loop setting placed by the training compute it needs to match the loss of no looping and the fraction of non-embedding parameters it saves; the fully trained settings form the upper frontier, every truncated setting lies below it, and two fully trained loops save about 30% of the parameters with little extra compute.">
+      <figcaption>
+        <strong>No looping is computationally optimal; two fully trained loops save most parameters with little extra compute.</strong>
+        Each marker is a loop setting \((T,B)\), with \(T\) forward loops and the last \(B\) trained, at the parameter and token
+        counts our scaling law finds <span class="nowrap">compute-optimal</span>. Compared with the model without looping at the
+        same loss, the horizontal axis shows the training compute it needs and the vertical axis the fraction of
+        <span class="nowrap">non-embedding</span> parameters it saves. Filled markers use full BPTT (\(B=T\)), and the dashed
+        curve is the law's prediction for full BPTT at any \(T\) from 2 to 16. Every truncated setting lies below this curve,
+        so full BPTT forms the frontier and saves the most parameters at each compute.
+      </figcaption>
+    </figure>
   </div>
 </section>
 
-<section class="section alt" id="contributions">
+<section class="section alt" id="findings">
   <div class="container">
-    <h2 class="section-title">Contributions</h2>
-    <p class="section-lead">
-      We vary model size \(N\), training tokens \(D\), forward loops \(T\) and backward loops \(B\) independently and ask:
-      <em>how do they jointly determine the loss, and should we truncate backpropagation under a fixed training budget?</em>
-    </p>
-    <div class="contribs">
-      <article class="contrib">
-        <span class="contrib-num">1</span>
-        <h3>A unified scaling law based on effective parameters</h3>
-        <p>
-          A law that expresses loop gains and truncation discounts through an effective parameter count, jointly modeling model
-          size, training tokens, and independent forward and backward loop counts.
-        </p>
-        <a class="contrib-link" href="#takeaway-1">Takeaway 1 &rarr;</a>
-      </article>
-      <article class="contrib">
-        <span class="contrib-num">2</span>
-        <h3>An explanation of when truncation pays</h3>
-        <p>
-          Why truncation can pay at a prescribed forward-loop count, and why joint forward&ndash;backward allocation favors full
-          BPTT, supported by separately fitted laws and <span class="nowrap">matched-compute</span> experiments.
-        </p>
-        <a class="contrib-link" href="#takeaway-2">Takeaway 2 &rarr;</a>
-      </article>
-      <article class="contrib">
-        <span class="contrib-num">3</span>
-        <h3>Compute-allocation rules and parameter-efficient training</h3>
-        <p>
-          Allocation rules for fixed and free model size, and two fully trained loops that nearly match <span class="nowrap">compute-optimal</span> non-looped
-          models while having substantially fewer trainable parameters.
-        </p>
-        <a class="contrib-link" href="#takeaway-3">Takeaways 3&ndash;4 &rarr;</a>
-      </article>
-    </div>
-  </div>
-</section>
+    <h2 class="section-title">Four findings</h2>
 
-<section class="section" id="takeaways">
-  <div class="container">
-    <h2 class="section-title">Four takeaways</h2>
-
-    <article class="takeaway accent-blue" id="takeaway-1">
+    <article class="takeaway" id="finding-1">
       <header class="takeaway-head">
-        <span class="takeaway-num">Takeaway 1</span>
+        <span class="takeaway-num">Finding 1</span>
         <h3>Loops add effective parameters; truncation discounts them</h3>
       </header>
-      <div class="takeaway-grid">
-        <div class="takeaway-text">
-          <p>
-            We measure what looping is worth by an <em>effective parameter count</em>: the size of a non-looped model that reaches
-            the same loss on the same tokens. Only the recurrent block \(N_{\mathrm{rec}}\) runs in every loop; the prelude and
-            coda \(N_{\mathrm{once}}\) run once.
-          </p>
-          <p>
-            Each fully trained loop adds effective parameters, with diminishing returns toward a finite ceiling. Truncation
-            discounts this gain, and from the same setting, <strong>doubling \(B\) adds more effective parameters than doubling
-            \(T\)</strong>.
-          </p>
-        </div>
-        <div class="takeaway-side">
-          <div class="eq-card">
-            \[N_{\mathrm{eff}} = N_{\mathrm{once}} + g(T,B)\,N_{\mathrm{rec}}\]
-            \[g(T,B) = \exp\!\big[c\,\big(1 - T^{-p}B^{-q}\big)\big]\]
-            <p class="eq-note">\(q \approx 1.02 \gg p \approx 0.24\): a backward loop is worth far more than a forward loop.</p>
-          </div>
-          <ul class="chips">
-            <li><b>(4, 4)</b> worth 1.76&times; the parameters</li>
-            <li><b>(4, 1)</b> worth only 1.19&times;</li>
-          </ul>
-        </div>
-      </div>
-      <div class="figtabs">
-        <div class="tablist" role="tablist" aria-label="Takeaway 1 figures">
-          <button type="button" role="tab" aria-selected="true" aria-controls="t1-a" id="t1-a-tab">Effective size</button>
-          <button type="button" role="tab" aria-selected="false" aria-controls="t1-b" id="t1-b-tab" tabindex="-1">Loss of the runs (240M)</button>
-        </div>
-        <figure class="figure" role="tabpanel" id="t1-a" aria-labelledby="t1-a-tab">
-          <img src="static/images/law_parts.png" width="2200" height="728" loading="lazy" data-zoom
-               alt="Three panels: the looping coefficient with full BPTT saturating toward a ceiling near 3; the coefficient against the trained fraction B over T for T equal to 2, 4 and 8; and the effective size of each loop setting in multiples of the parameters.">
-          <figcaption>
-            <strong>What a loop setting is worth in effective size.</strong>
-            <b>(a)</b> With full BPTT, the looping coefficient \(g(T,T)\) approaches its fitted ceiling.
-            <b>(b)</b> \(g(T,B)\) against the trained fraction \(B/T\).
-            <b>(c)</b> Total effective size \(N_{\mathrm{eff}}/N\), grouped by \(B\).
-            Lines, bars and numbers: the law; markers: run estimates (median and interquartile range over sizes and budgets).
-          </figcaption>
-        </figure>
-        <figure class="figure" role="tabpanel" id="t1-b" aria-labelledby="t1-b-tab" hidden>
-          <img src="static/images/law_tb.png" width="2200" height="727" loading="lazy" data-zoom
-               alt="Three panels of validation loss at 240M parameters and 2 D0 tokens: varying T with B equal to T, varying B at fixed T, and varying T at fixed B; markers are runs and lines the fitted law.">
-          <figcaption>
-            <strong>Forward and backward loops at fixed size and budget (240M, \(2D_0\)).</strong> Markers: runs; lines: the fitted law.
-            <b>(a)</b> \(B=T\): the gain levels off; dashed, the power-law gain of prior work keeps growing.
-            <b>(b)</b> Fixed \(T\): training more of the loops lowers the loss.
-            <b>(c)</b> Fixed \(B\): more forward loops help little.
-          </figcaption>
-        </figure>
-      </div>
+      <p class="takeaway-intro">
+        We measure what looping is worth by an <em>effective parameter count</em>: the size of a non-looped model that reaches
+        the same loss on the same tokens. Each fully trained loop adds effective parameters, with diminishing returns toward a
+        finite ceiling. Truncation discounts this gain, and from the same setting, <strong>doubling \(B\) adds more effective
+        parameters than doubling \(T\)</strong>.
+      </p>
+      <ul class="chips">
+        <li><b>(4, 4)</b> is worth 1.76&times; its parameters</li>
+        <li><b>(4, 1)</b> only 1.19&times;</li>
+      </ul>
+      <figure class="figure">
+        <img src="static/images/law_parts.png" width="2200" height="728" loading="lazy" data-zoom
+             alt="Three panels: the looping coefficient with full BPTT saturating toward a ceiling near 3; the coefficient against the trained fraction B over T for T equal to 2, 4 and 8; and the effective size of each loop setting in multiples of the parameters.">
+        <figcaption>
+          <strong>What a loop setting is worth in effective size.</strong>
+          <b>(a)</b> With full BPTT, the looping coefficient \(g(T,T)\) approaches its fitted ceiling.
+          <b>(b)</b> \(g(T,B)\) against the trained fraction \(B/T\).
+          <b>(c)</b> Total effective size \(N_{\mathrm{eff}}/N\), grouped by \(B\).
+          Lines, bars and numbers: the law; markers: run estimates (median and interquartile range over sizes and budgets).
+          Effective size is set mainly by \(B\): within each group of equal \(B\), neither the law nor the runs gain much from
+          more forward loops.
+        </figcaption>
+      </figure>
     </article>
 
-    <article class="takeaway accent-rust" id="takeaway-2">
+    <article class="takeaway" id="finding-2">
       <header class="takeaway-head">
-        <span class="takeaway-num">Takeaway 2</span>
-        <h3>Truncate only when the forward-loop count is prescribed</h3>
+        <span class="takeaway-num">Finding 2</span>
+        <h3>Truncation helps only at a prescribed forward-loop count; otherwise full BPTT is optimal</h3>
       </header>
       <p class="takeaway-intro">
         A forward pass through the recurrent block costs one unit of compute and a backward pass two, so a loop setting
@@ -260,7 +202,7 @@
         what is held fixed.
       </p>
       <div class="versus">
-        <div class="versus-card tone-rust">
+        <div class="versus-card tone-neutral">
           <span class="versus-tag">\(T\) prescribed</span>
           <h4>Truncate</h4>
           <p>
@@ -274,76 +216,50 @@
           <span class="versus-tag">\(T\) and \(B\) both chosen</span>
           <h4>Full BPTT</h4>
           <p>
-            At fixed loop compute \(T+2B=S\), the law is maximized at \(T=B=S/3\) whenever \(q&gt;2p\), and the fit satisfies
-            this by a wide margin (1.02 vs. 0.47). Rather than stopping gradients on early loops, run fewer loops and train them all.
+            At fixed loop compute, one backward loop is worth more than the two forward loops of the same cost
+            (\(q\approx1.02>2p\approx0.47\)), so the law is maximized with every loop trained. Rather than stopping gradients on early loops, run fewer loops and train them all.
           </p>
           <p class="versus-num"><strong class="versus-big">5 / 5</strong> model sizes where \((4,4)\) beats the equal-cost \((8,2)\)</p>
         </div>
       </div>
-      <div class="figtabs">
-        <div class="tablist" role="tablist" aria-label="Takeaway 2 figures">
-          <button type="button" role="tab" aria-selected="true" aria-controls="t2-a" id="t2-a-tab">\(T\) free: (4,4) vs. (8,2)</button>
-          <button type="button" role="tab" aria-selected="false" aria-controls="t2-b" id="t2-b-tab" tabindex="-1">Matched-compute runs</button>
-          <button type="button" role="tab" aria-selected="false" aria-controls="t2-c" id="t2-c-tab" tabindex="-1">\(T\) prescribed: \(B^*=2\)</button>
+      <figure class="figure figure-narrow">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Size</th><th>Compute \(C\) (\(10^{19}\) FLOPs)</th><th>Loss \((8,2)\)</th><th>Loss \((4,4)\)</th><th>\(\Delta L\)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>60M</td><td>2.41</td><td>2.5211</td><td class="win">2.4933</td><td>0.0278</td></tr>
+              <tr><td>120M</td><td>4.59</td><td>2.3843</td><td class="win">2.3696</td><td>0.0147</td></tr>
+              <tr><td>240M</td><td>8.28</td><td>2.2778</td><td class="win">2.2642</td><td>0.0136</td></tr>
+              <tr><td>480M</td><td>15.29</td><td>2.1845</td><td class="win">2.1738</td><td>0.0107</td></tr>
+              <tr><td>1B</td><td>28.38</td><td>2.1144</td><td class="win">2.1057</td><td>0.0087</td></tr>
+            </tbody>
+          </table>
         </div>
-        <figure class="figure figure-narrow" role="tabpanel" id="t2-a" aria-labelledby="t2-a-tab">
-          <img src="static/images/free_forward_isoloss.png" width="2000" height="1226" loading="lazy" data-zoom
-               alt="Iso-loss contours over training compute and model size for laws fitted separately to (4,4) and (8,2); the (4,4) contours lie to the left, meaning less compute at equal loss.">
-          <figcaption>
-            <strong>Fewer fully trained loops improve the <span class="nowrap">compute-optimal</span> frontier.</strong>
-            Iso-loss contours of laws fitted separately to \((4,4)\) (solid) and \((8,2)\) (dashed), both with \(T+2B=12\).
-            At equal loss, \((4,4)\) uses 8&ndash;14% less compute.
-          </figcaption>
-        </figure>
-        <figure class="figure figure-narrow" role="tabpanel" id="t2-b" aria-labelledby="t2-b-tab" hidden>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr><th>Size</th><th>Compute \(C\) (\(10^{19}\) FLOPs)</th><th>Loss \((8,2)\)</th><th>Loss \((4,4)\)</th><th>\(\Delta L\)</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>60M</td><td>2.41</td><td>2.5211</td><td class="win">2.4933</td><td>0.0278</td></tr>
-                <tr><td>120M</td><td>4.59</td><td>2.3843</td><td class="win">2.3696</td><td>0.0147</td></tr>
-                <tr><td>240M</td><td>8.28</td><td>2.2778</td><td class="win">2.2642</td><td>0.0136</td></tr>
-                <tr><td>480M</td><td>15.29</td><td>2.1845</td><td class="win">2.1738</td><td>0.0107</td></tr>
-                <tr><td>1B</td><td>28.38</td><td>2.1144</td><td class="win">2.1057</td><td>0.0087</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <figcaption>
-            <strong>Measured validation loss at \(D=16D_0\) (17.2B tokens), in nats per token.</strong>
-            Within each row, \((8,2)\) and \((4,4)\) have the same model size, tokens and training compute;
-            \(\Delta L = L_{8,2}-L_{4,4}\).
-          </figcaption>
-        </figure>
-        <figure class="figure figure-narrow" role="tabpanel" id="t2-c" aria-labelledby="t2-c-tab" hidden>
-          <img src="static/images/iso_study.png" width="2000" height="1018" loading="lazy" data-zoom
-               alt="Iso-loss contours and compute-optimal frontiers of laws fitted separately to B equal to T and to B equal to 2, at T equal to 4 and T equal to 8.">
-          <figcaption>
-            <strong>With \(T\) prescribed, separately fitted laws confirm the predicted truncation.</strong>
-            Iso-loss contours (labels: loss in nats) and <span class="nowrap">compute-optimal</span> model sizes of laws fitted separately to \(B=T\) and to the
-            predicted \(B^*=2\), at \(T=4\) and \(T=8\). Markers: measured runs.
-          </figcaption>
-        </figure>
-      </div>
+        <figcaption>
+          <strong>Reducing forward depth at equal training compute.</strong>
+          Measured validation loss at \(D=16D_0\) (17.2B tokens), in nats per token. Within each row, \((8,2)\) and \((4,4)\)
+          have the same model size, tokens and training compute; \(\Delta L = L_{8,2}-L_{4,4}\).
+        </figcaption>
+      </figure>
     </article>
 
-    <article class="takeaway accent-teal" id="takeaway-3">
+    <article class="takeaway" id="finding-3">
       <header class="takeaway-head">
-        <span class="takeaway-num">Takeaway 3</span>
-        <h3>At fixed model size, spend additional compute mostly on training tokens</h3>
+        <span class="takeaway-num">Finding 3</span>
+        <h3>At fixed model size, optimal loops and tokens both grow with compute; tokens grow faster</h3>
       </header>
       <div class="takeaway-grid">
         <div class="takeaway-text">
           <p>
             When a model must fit a memory budget, extra compute can buy more loops per token or more training tokens. Under the
-            fitted law, the optimal number of fully trained loops grows as \(C^{0.24}\) and the number of training tokens as
-            \(C^{0.76}\).
+            fitted law with full BPTT, the <span class="nowrap">compute-optimal</span> loop count grows as \(C^{0.24}\) and the
+            token count as \(C^{0.76}\), where \(C\) is the training compute; the runs at every size agree.
           </p>
           <p>
             Loop counts are integers, so the best setting changes in steps: <strong>no looping, then two, then four trained
-            loops</strong>. Between steps, added compute goes to tokens. In the runs, the best fully trained setting beats the best
-            truncated one at every size and compute.
+            loops</strong>. Between steps, added compute goes to tokens.
           </p>
         </div>
         <div class="takeaway-side">
@@ -366,29 +282,30 @@
         <img src="static/images/fixed_size.png" width="2200" height="679" loading="lazy" data-zoom
              alt="Loss relative to no looping against training compute at 60M, 120M, 240M and 480M; the best setting switches from no looping to two and then four fully trained loops as compute grows.">
         <figcaption>
-          <strong>At a fixed model size, the best loop count grows with training compute.</strong>
-          Loss minus that of the model without looping at the same compute; markers: runs; \((4,2)\) trains half of its four loops.
-          The bold curve is the best setting, named in the strip by its loop count \(T^*\).
+          <strong>At a fixed model size, the best loop count grows with training compute: no looping, then two, then four trained loops.</strong>
+          Loss minus that of the model without looping at the same compute, which spends it on more tokens; markers are runs,
+          with a smooth curve through each setting; \((4,2)\) trains half of its four loops. The bold curve is the best setting,
+          named in the strip by its loop count \(T^*\) (faded where extrapolated).
         </figcaption>
       </figure>
     </article>
 
-    <article class="takeaway accent-gold" id="takeaway-4">
+    <article class="takeaway" id="finding-4">
       <header class="takeaway-head">
-        <span class="takeaway-num">Takeaway 4</span>
-        <h3>Two fully trained loops are competitive with fewer parameters</h3>
+        <span class="takeaway-num">Finding 4</span>
+        <h3>With free model size, no looping is optimal, but two fully trained loops come close with 27&ndash;32% fewer parameters</h3>
       </header>
       <div class="takeaway-grid">
         <div class="takeaway-text">
           <p>
-            When model size is free, compute spent repeating a block could instead train more unique parameters, so the law favors
-            no looping. The best looped setting is \((2,2)\): \(g(2,2)\approx1.91\), so two shared loops are worth almost two
-            untied copies of the block.
+            When model size is free, compute spent repeating a block could instead train more unique parameters, so the law
+            favors no looping at every compute (<a href="#loop-settings">figure above</a>). Among looped settings, \((2,2)\) comes
+            closest: \(g(2,2)\approx1.91\), so two shared loops are worth almost two untied copies of the block.
           </p>
           <p>
-            At equal compute, \((2,2)\) comes within 0.001&ndash;0.008 nats of the <span class="nowrap">compute-optimal</span> non-looped model across three
-            budgets while having 27&ndash;32% fewer non-embedding parameters. <strong>At \(2.1\times10^{19}\) FLOPs, 8% more
-            compute is enough for it to reach the lower loss.</strong>
+            In the runs, the <span class="nowrap">compute-optimal</span> \((2,2)\) model stays within 0.008 nats of the
+            <span class="nowrap">compute-optimal</span> model without looping at equal training compute, with 27&ndash;32% fewer
+            <span class="nowrap">non-embedding</span> parameters. <strong>With 8% more compute, its loss falls below.</strong>
           </p>
         </div>
         <div class="takeaway-side">
@@ -417,7 +334,7 @@
   </div>
 </section>
 
-<section class="section alt" id="explorer">
+<section class="section" id="explorer">
   <div class="container">
     <h2 class="section-title">What is a loop setting worth?</h2>
     <p class="section-lead">
@@ -494,7 +411,7 @@
       </div>
 
       <div class="ex-verdicts">
-        <div class="verdict tone-rust">
+        <div class="verdict tone-neutral">
           <span class="verdict-tag" id="ex-v1-tag">If \(T\) is prescribed</span>
           <p id="ex-v1"></p>
         </div>
@@ -514,13 +431,13 @@
   </div>
 </section>
 
-<section class="section" id="law">
+<section class="section alt" id="law">
   <div class="container">
     <h2 class="section-title">One law for size, data and loops</h2>
     <p class="section-lead">
       The validation loss follows a coupled size&ndash;data law in which the model size is replaced by the effective size. The
       looping coefficient adds three coefficients \(c,p,q\) to the six of the size&ndash;data law; all nine are fitted jointly on 230
-      configurations.
+      configurations (\(R^2=0.9992\)).
     </p>
     <div class="law-card">
       <div class="eq-hero">
@@ -578,44 +495,6 @@
       </div>
       <p class="table-note">Reference scales \(N_0=2.4\times10^{8}\) non-embedding parameters and \(D_0=2^{30}\approx1.07\times10^{9}\) tokens; loss in nats per token on deduplicated <span class="nowrap">held-out</span> data.</p>
     </div>
-
-    <figure class="figure">
-      <img src="static/images/scaling.png" width="2200" height="660" loading="lazy" data-zoom
-           alt="Validation loss against training tokens at five model sizes for no looping and three fully trained loop settings, with the fitted law drawn through the runs.">
-      <figcaption>
-        <strong>More loops with full BPTT lower the loss at every size and budget, and one law tracks all of them.</strong>
-        Dots: runs, open where outside the fitting set; lines: the fitted law.
-      </figcaption>
-    </figure>
-  </div>
-</section>
-
-<section class="section alt" id="code">
-  <div class="container narrow">
-    <h2 class="section-title">Code</h2>
-    <p>
-      <a href="https://github.com/xjxyys/Truncate-or-Not">The release</a> contains the looped transformer in plain
-      PyTorch, its Megatron-LM trainer with truncated BPTT, the data preparation, the <span class="nowrap">held-out</span> evaluation and the
-      compute accounting. The <a href="https://github.com/xjxyys/Truncate-or-Not#prepare-data">README</a> lists
-      the data preparation steps; <code>scripts/model_sizes.py</code> prints the settings of every token budget.
-    </p>
-    <div class="codeblock">
-      <button type="button" class="copy-btn" data-copy-target="code-snippet">Copy</button>
-<pre id="code-snippet"><code>git clone https://github.com/xjxyys/Truncate-or-Not.git &amp;&amp; cd Truncate-or-Not
-pip install -e '.[monitoring,dev]'
-<span class="c"># Megatron-LM is used as a source checkout next to this repository</span>
-git clone https://github.com/NVIDIA/Megatron-LM.git ../Megatron-LM
-git -C ../Megatron-LM checkout ed6ac270ba
-
-<span class="c"># 240M, (T, B) = (4, 4), 4 x 2^30 tokens, 8 GPUs</span>
-python scripts/train.py --run-name m240_d4_t4b4 --size 240M --loops 4 --backprop-loops 4 --tokens 4
-
-<span class="c"># held-out evaluation</span>
-echo m240_d4_t4b4 &gt; runs.txt
-python scripts/eval_heldout.py eval --list runs.txt --gpus 8
-python scripts/eval_heldout.py read --list runs.txt</code></pre>
-    </div>
-    <p class="code-note">For truncated BPTT, lower <code>--backprop-loops</code>, e.g. <code>--backprop-loops 1</code> for \((4,1)\).</p>
   </div>
 </section>
 
