@@ -199,7 +199,7 @@
                 <h3>Truncate or Not? A Scaling Study of Looped Transformers with Truncated Backpropagation</h3>
                 <p class="authors"><strong>Xuyuan Xiong<sup>*</sup></strong>, Siyu Chen<sup>*</sup>, Zihan Shao, Yue Su, Weiyang Jin, Ping Luo, Zhuoran Yang, Xihui Liu</p>
                 <p class="equal-contribution"><sup>*</sup> Equal contribution</p>
-                <p class="paper-summary">A scaling study across nearly 600 runs finds that full backpropagation through fewer loops outperforms truncated alternatives at matched training compute.</p>
+                <p class="paper-summary">A unified scaling law over nearly 600 runs favors full BPTT through fewer loops, and two fully trained loops beat a larger non-looped model with fewer parameters.</p>
                 <p class="venue-line">arXiv preprint, 2026</p>
                 <p class="paper-links">
                   <a href="truncate-or-not/">[website]</a>
@@ -210,10 +210,10 @@
             </article>
 
             <article class="publication-item">
-              <div class="paper-visual">
+              <a class="paper-visual" href="https://arxiv.org/abs/2609.30391" aria-label="Open the QTPT paper">
                 <img src="assets/papers/qtpt.png" alt="QTPT and supervised pretraining comparison" />
                 <span class="paper-tag">NeurIPS 2026</span>
-              </div>
+              </a>
               <div>
                 <h3>From Weak Data to Strong Policy: Q-Targets Enable Provable In-Context Reinforcement Learning</h3>
                 <p class="authors">
@@ -225,7 +225,7 @@
                   <a href="https://openreview.net/profile?id=~Tao_Yao2">Tao Yao</a>
                 </p>
                 <p class="equal-contribution"><sup>*</sup> Equal contribution</p>
-                <p class="paper-summary">A Q-target pretraining framework for provable in-context reinforcement learning from non-expert offline data.</p>
+                <p class="paper-summary">We propose QTPT, which replaces supervised behavior cloning with Bellman Q-target pretraining for in-context reinforcement learning, provably and empirically learning strong policies even from random or suboptimal offline trajectories.</p>
                 <p class="venue-line">NeurIPS 2026</p>
                 <p class="paper-links">
                   <a href="https://arxiv.org/abs/2609.30391">[arXiv]</a>
@@ -241,7 +241,7 @@
               <div>
                 <h3>LithoGRPO: Fast Inverse Lithography via GRPO Reinforced Flow Matching</h3>
                 <p class="authors">Yao Lai, <strong>Xuyuan Xiong</strong>, Zeyue Xue, Guojin Chen, Jing Wang, Xihui Liu, Rui Zhang, Robert Mullins, Bei Yu, Ping Luo</p>
-                <p class="paper-summary">A reinforced flow-matching framework for fast and manufacturable inverse lithography.</p>
+                <p class="paper-summary">LithoGRPO unifies flow matching with GRPO reinforcement learning and a 130× faster shot-counting evaluator to optimize high-fidelity, manufacturable photomasks under physical lithography constraints.</p>
                 <p class="venue-line">ICML 2026</p>
                 <p class="paper-links">
                   <a href="https://arxiv.org/abs/2606.00228">[paper]</a>
@@ -258,7 +258,7 @@
               <div>
                 <h3>Taming Polysemanticity in LLMs: Theory-Grounded Feature Recovery via Sparse Autoencoders</h3>
                 <p class="authors">Siyu Chen, Heejune Sheen, <strong>Xuyuan Xiong</strong>, Tianhao Wang, Zhuoran Yang</p>
-                <p class="paper-summary">Theory-grounded monosemantic feature recovery with Grouped Bias Adaptation.</p>
+                <p class="paper-summary">We formulate polysemanticity as a sparse mixture model and propose Group Bias Adaptation (GBA), the first Sparse Autoencoder training algorithm with provable monosemantic feature recovery guarantees.</p>
                 <p class="venue-line">ICLR 2026</p>
                 <p class="paper-links">
                   <a href="https://openreview.net/pdf?id=VtWkPIbAQ8">[paper]</a>
@@ -277,7 +277,7 @@
               <div>
                 <h3>SPOT: Scalable Policy Optimization with Trees for Markov Decision Processes</h3>
                 <p class="authors"><strong>Xuyuan Xiong</strong>, Pedro Chumpitaz-Flores, Kaixun Hua, Cheng Hua</p>
-                <p class="paper-summary">A scalable optimization method for compact and interpretable decision-tree policies.</p>
+                <p class="paper-summary">SPOT formulates decision-tree policy optimization in MDPs as a mixed-integer program with reduced-space parallel branch-and-bound, computing compact, interpretable optimal policies an order of magnitude faster.</p>
                 <p class="venue-line">NeurIPS 2025</p>
                 <p class="paper-links">
                   <a href="https://proceedings.neurips.cc/paper_files/paper/2025/hash/a9eef2d4f04e876674f4cb8f3c18bb52-Abstract-Conference.html">[paper]</a>
