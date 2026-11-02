@@ -475,6 +475,14 @@ a:hover {
   line-height: 1.45;
 }
 
+.publication-item .project-role {
+  margin: 5px 0 0;
+  color: var(--accent);
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .publication-item .venue-line {
   margin-top: 5px;
   color: var(--accent-dark);
