@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.19">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Xuyuan Xiong, Siyu Chen, Zihan Shao, Yue Su, Weiyang Jin, Ping Luo, Zhuoran Yang, Xihui Liu">
+
+<title>The Benefit of Looping Twice: Parameter Savings with Little Added Compute</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-dark-b626d73c4c936ccc3cb08be7d45d1df6.css" rel="stylesheet" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-ddbf77e1e3260ce74f0f2279f2ea1283.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="index_files/libs/bootstrap/bootstrap-dark-d59f9006a47b35bd9724bd2f27ba07da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="index_files/libs/bootstrap/bootstrap-ddbf77e1e3260ce74f0f2279f2ea1283.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<script src="index_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="index_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="index_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
+<style>html{ scroll-behavior: smooth; }</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+  /* Latin Modern Roman, the paper's text face (fonts/, GUST Font License). */
+  @font-face { font-family: "Latin Modern Roman"; src: url("fonts/lmroman10-regular.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Latin Modern Roman"; src: url("fonts/lmroman10-italic.woff") format("woff"); font-weight: 400; font-style: italic; font-display: swap; }
+  @font-face { font-family: "Latin Modern Roman"; src: url("fonts/lmromandemi10-regular.woff") format("woff"); font-weight: 600; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Latin Modern Roman"; src: url("fonts/lmroman10-bold.woff") format("woff"); font-weight: 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: "Latin Modern Roman"; src: url("fonts/lmroman10-bolditalic.woff") format("woff"); font-weight: 700; font-style: italic; font-display: swap; }
+</style>
+<meta name="description" content="Looped transformers at matched training compute, in dense models and in mixture-of-experts">
+<meta property="og:title" content="The Benefit of Looping Twice: Parameter Savings with Little Added Compute">
+<meta property="og:description" content="Looping twice saves parameters for little added compute. A dense looped transformer matches the best standard model with 27–32% fewer parameters at the same training compute and beats it with 27% fewer parameters for 8% more training compute; a looped mixture-of-experts model matches its untied twin with 17% fewer parameters for 9% more compute per token.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://xjxyys.github.io/blog/looping-twice/">
+<meta property="og:image" content="https://xjxyys.github.io/blog/looping-twice/assets/hero.png">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+  // Dark mode: each image in assets/ has a copy named *_dark.png (scripts/make_figs.py). Show the copy that fits the
+  // colour scheme, in the page and in the lightbox, whose links keep the light file's name.
+  (function () {
+    function isDark() { return document.body.classList.contains('quarto-dark'); }
+    function variant(path, dark) {
+      var light = path.replace(/_dark\.png$/, '.png');
+      return dark ? light.replace(/\.png$/, '_dark.png') : light;
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      var mode = null;
+      function apply() {
+        var dark = isDark();
+        if (dark === mode) return;  // the body's class also changes for other reasons, e.g. an open lightbox
+        mode = dark;
+        document.querySelectorAll('img[src^="assets/"]').forEach(function (img) {
+          img.setAttribute('src', variant(img.getAttribute('src'), dark));
+        });
+      }
+      apply();
+      new MutationObserver(apply).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    });
+    window.addEventListener('load', function () {
+      if (!window.lightboxQuarto) return;
+      window.lightboxQuarto.on('slide_before_load', function (data) {
+        var href = data.trigger && data.trigger.getAttribute('href');
+        if (href && href.indexOf('assets/') === 0) data.slideConfig.href = variant(href, isDark());
+      });
+    });
+  })();
+</script>
+<script>
+  // Keep inline math and the punctuation right after it on one line.
+  window.addEventListener('load', function () {
+    document.querySelectorAll('span.math.inline').forEach(function (m) {
+      var t = m.nextSibling;
+      if (!t || t.nodeType !== 3) return;
+      var p = t.nodeValue.match(/^[,.;:!?)\u2019\u201d]+/);
+      if (!p) return;
+      var w = document.createElement('span');
+      w.className = 'nowrap';
+      m.parentNode.insertBefore(w, m);
+      w.appendChild(m);
+      w.appendChild(document.createTextNode(p[0]));
+      t.nodeValue = t.nodeValue.slice(p[0].length);
+    });
+  });
+</script>
+
+  <script defer="" src="katex/katex.min.js"></script>
+  <script>document.addEventListener("DOMContentLoaded", function () {
+ var mathElements = document.getElementsByClassName("math");
+ var macros = [];
+ for (var i = 0; i < mathElements.length; i++) {
+  var texText = mathElements[i].firstChild;
+  if (mathElements[i].tagName == "SPAN") {
+   katex.render(texText.data, mathElements[i], {
+    displayMode: mathElements[i].classList.contains('display'),
+    throwOnError: false,
+    macros: macros,
+    fleqn: false
+   });
+}}});
+  </script>
+  <link rel="stylesheet" href="katex/katex.min.css">
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light"><script id="quarto-html-before-body" type="application/javascript">
+    const toggleBodyColorMode = (bsSheetEl) => {
+      const mode = bsSheetEl.getAttribute("data-mode");
+      const bodyEl = window.document.querySelector("body");
+      if (mode === "dark") {
+        bodyEl.classList.add("quarto-dark");
+        bodyEl.classList.remove("quarto-light");
+      } else {
+        bodyEl.classList.add("quarto-light");
+        bodyEl.classList.remove("quarto-dark");
+      }
+    }
+    const toggleBodyColorPrimary = () => {
+      const bsSheetEl = window.document.querySelector("link#quarto-bootstrap:not([rel=disabled-stylesheet])");
+      if (bsSheetEl) {
+        toggleBodyColorMode(bsSheetEl);
+      }
+    }
+    const setColorSchemeToggle = (alternate) => {
+      const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+      for (let i=0; i < toggles.length; i++) {
+        const toggle = toggles[i];
+        if (toggle) {
+          if (alternate) {
+            toggle.classList.add("alternate");
+          } else {
+            toggle.classList.remove("alternate");
+          }
+        }
+      }
+    };
+    const toggleColorMode = (alternate) => {
+      // Switch the stylesheets
+      const primaryStylesheets = window.document.querySelectorAll('link.quarto-color-scheme:not(.quarto-color-alternate)');
+      const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+      manageTransitions('#quarto-margin-sidebar .nav-link', false);
+      if (alternate) {
+        // note: dark is layered on light, we don't disable primary!
+        enableStylesheet(alternateStylesheets);
+        for (const sheetNode of alternateStylesheets) {
+          if (sheetNode.id === "quarto-bootstrap") {
+            toggleBodyColorMode(sheetNode);
+          }
+        }
+      } else {
+        disableStylesheet(alternateStylesheets);
+        enableStylesheet(primaryStylesheets)
+        toggleBodyColorPrimary();
+      }
+      manageTransitions('#quarto-margin-sidebar .nav-link', true);
+      // Switch the toggles
+      setColorSchemeToggle(alternate)
+      // Hack to workaround the fact that safari doesn't
+      // properly recolor the scrollbar when toggling (#1455)
+      if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+        manageTransitions("body", false);
+        window.scrollTo(0, 1);
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          manageTransitions("body", true);
+        }, 40);
+      }
+    }
+    const disableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        stylesheet.rel = 'disabled-stylesheet';
+      }
+    }
+    const enableStylesheet = (stylesheets) => {
+      for (let i=0; i < stylesheets.length; i++) {
+        const stylesheet = stylesheets[i];
+        if(stylesheet.rel !== 'stylesheet') { // for Chrome, which will still FOUC without this check
+          stylesheet.rel = 'stylesheet';
+        }
+      }
+    }
+    const manageTransitions = (selector, allowTransitions) => {
+      const els = window.document.querySelectorAll(selector);
+      for (let i=0; i < els.length; i++) {
+        const el = els[i];
+        if (allowTransitions) {
+          el.classList.remove('notransition');
+        } else {
+          el.classList.add('notransition');
+        }
+      }
+    }
+    const isFileUrl = () => {
+      return window.location.protocol === 'file:';
+    }
+    const hasAlternateSentinel = () => {
+      let styleSentinel = getColorSchemeSentinel();
+      if (styleSentinel !== null) {
+        return styleSentinel === "alternate";
+      } else {
+        return false;
+      }
+    }
+    const setStyleSentinel = (alternate) => {
+      const value = alternate ? "alternate" : "default";
+      if (!isFileUrl()) {
+        window.localStorage.setItem("quarto-color-scheme", value);
+      } else {
+        localAlternateSentinel = value;
+      }
+    }
+    const getColorSchemeSentinel = () => {
+      if (!isFileUrl()) {
+        const storageValue = window.localStorage.getItem("quarto-color-scheme");
+        return storageValue != null ? storageValue : localAlternateSentinel;
+      } else {
+        return localAlternateSentinel;
+      }
+    }
+    const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+      const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+      const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+      let newTheme = '';
+      if(authorPrefersDark) {
+        newTheme = isAlternate ? baseTheme : alternateTheme;
+      } else {
+        newTheme = isAlternate ? alternateTheme : baseTheme;
+      }
+      const changeGiscusTheme = () => {
+        // From: https://github.com/giscus/giscus/issues/336
+        const sendMessage = (message) => {
+          const iframe = document.querySelector('iframe.giscus-frame');
+          if (!iframe) return;
+          iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+        }
+        sendMessage({
+          setConfig: {
+            theme: newTheme
+          }
+        });
+      }
+      const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+      if (isGiscussLoaded) {
+        changeGiscusTheme();
+      }
+    };
+    const authorPrefersDark = false;
+    const queryPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const darkModeDefault = queryPrefersDark.matches;
+      document.querySelector('link#quarto-text-highlighting-styles.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+      document.querySelector('link#quarto-bootstrap.quarto-color-scheme-extra').rel = 'disabled-stylesheet';
+    let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+    // Dark / light mode switch
+    window.quartoToggleColorScheme = () => {
+      // Read the current dark / light value
+      let toAlternate = !hasAlternateSentinel();
+      toggleColorMode(toAlternate);
+      setStyleSentinel(toAlternate);
+      toggleGiscusIfUsed(toAlternate, darkModeDefault);
+      window.dispatchEvent(new Event('resize'));
+    };
+    queryPrefersDark.addEventListener("change", e => {
+      if(window.localStorage.getItem("quarto-color-scheme") !== null)
+        return;
+      const alternate = e.matches
+      toggleColorMode(alternate);
+      localAlternateSentinel = e.matches ? 'alternate' : 'default'; // this is used alongside local storage!
+      toggleGiscusIfUsed(alternate, darkModeDefault);
+    });
+    // Switch to dark mode if need be
+    if (hasAlternateSentinel()) {
+      toggleColorMode(true);
+    } else {
+      toggleColorMode(false);
+    }
+  </script>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul class="collapse">
+  <li><a href="#sec-intro" id="toc-sec-intro" class="nav-link active" data-scroll-target="#sec-intro">1. Introduction</a></li>
+  <li><a href="#sec-looped" id="toc-sec-looped" class="nav-link" data-scroll-target="#sec-looped">2. Looped Models</a></li>
+  <li><a href="#sec-dense" id="toc-sec-dense" class="nav-link" data-scroll-target="#sec-dense">3. Parameter Savings in Dense Models</a></li>
+  <li><a href="#sec-moe" id="toc-sec-moe" class="nav-link" data-scroll-target="#sec-moe">4. Parameter Savings in Mixture-of-Experts Models</a></li>
+  <li><a href="#sec-law" id="toc-sec-law" class="nav-link" data-scroll-target="#sec-law">5. A Scaling Law for Looped Models</a></li>
+  <li><a href="#sec-frontier" id="toc-sec-frontier" class="nav-link" data-scroll-target="#sec-frontier">6. The Parameter–Compute Pareto Frontier</a></li>
+  <li><a href="#sec-conclusions" id="toc-sec-conclusions" class="nav-link" data-scroll-target="#sec-conclusions">Conclusions</a></li>
+  <li><a href="#sec-references" id="toc-sec-references" class="nav-link" data-scroll-target="#sec-references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+
+
+
+
+<div class="cover">
+<p><a href="assets/hero.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="assets/hero.png" class="img-fluid" alt="A standard transformer of fourteen layers with 471M parameters next to a looped transformer of twelve layers whose middle six run twice, with 344M parameters: 27% fewer parameters for 8% more training compute and a lower loss."></a></p>
+</div>
+<header class="post-header">
+  <h1 class="post-title">The Benefit of Looping Twice:<span class="post-title-sub">Parameter Savings with Little Added Compute</span></h1>
+  <p class="post-subtitle">Looped transformers at matched training compute, in dense models and in mixture-of-experts</p>
+  <p class="post-authors">Xuyuan Xiong<sup>1,*</sup>, Siyu Chen<sup>2,*</sup>, Zihan Shao<sup>2</sup>, Yue Su<sup>1</sup>, Weiyang Jin<sup>1</sup>, Ping Luo<sup>1</sup>, Zhuoran Yang<sup>2,†</sup>, Xihui Liu<sup>1,†</sup></p>
+  <p class="post-meta"><sup>1</sup>MMLab, The University of Hong Kong &nbsp; <sup>2</sup>Yale University &nbsp; <sup>*</sup>Equal contribution &nbsp; <sup>†</sup>Corresponding authors</p>
+  <p class="post-meta">Date: November 2, 2026 &nbsp;·&nbsp; 15 min read</p>
+  <p class="post-meta post-links"><a href="https://arxiv.org/abs/2610.26030">arXiv</a> | <a href="https://arxiv.org/pdf/2610.26030">PDF</a> | <a href="https://github.com/xjxyys/Truncate-or-Not">Code</a> | <button type="button" class="theme-toggle" onclick="window.quartoToggleColorScheme()"><span class="to-dark">Dark mode</span><span class="to-light">Light mode</span></button></p>
+</header>
+<details class="cite">
+<summary>
+Cite this work
+</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bibtex code-with-copy"><code class="sourceCode bibtex"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="va">@article</span>{<span class="ot">xiong2026truncate</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">title</span>   = {Truncate or Not? A Scaling Study of Looped Transformers</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>             with Truncated Backpropagation},</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">author</span>  = {Xiong, Xuyuan and Chen, Siyu and Shao, Zihan and Su, Yue</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>             and Jin, Weiyang and Luo, Ping and Yang, Zhuoran and Liu, Xihui},</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">journal</span> = {arXiv preprint arXiv:2610.26030},</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">year</span>    = {2026}</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="tldr">
+<p><strong>TL;DR</strong></p>
+<p>A looped transformer reuses one block of layers several times for every token. We ask how many parameters this saves against a standard transformer trained with the same compute, measure it in dense and in mixture-of-experts models, and explain it with a scaling law fitted to nearly 600 training runs.</p>
+<ul>
+<li><strong>Dense models.</strong> With 27% fewer parameters, a 344M looped model reaches a lower loss than the best 471M model without loops, for 8% more training compute.</li>
+<li><strong>Mixture-of-experts.</strong> A looped model that shares its experts across its two passes matches its untied counterpart with 17% fewer parameters and 9% more compute per token; a purely looped model beats it with 11% fewer parameters and 18% more compute per token.</li>
+<li><strong>Why two loops.</strong> A scaling law prices a loop in effective parameters. Read at equal loss, it gives a Pareto frontier of parameters saved against compute paid. Two fully trained loops are its knee: they give most of the attainable parameter saving for a few percent more compute.</li>
+</ul>
+</div>
+<div id="tbl-main" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-main-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table summary">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">Looped model</th>
+<th data-quarto-table-cell-role="th">Parameters saved</th>
+<th data-quarto-table-cell-role="th">Extra compute</th>
+<th data-quarto-table-cell-role="th">Loss vs reference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="group odd">
+<td colspan="4">Against the best model without loops</td>
+</tr>
+<tr class="even">
+<td>Dense (2, 2), same compute</td>
+<td>27–32%</td>
+<td>0%</td>
+<td>+0.001 to +0.008</td>
+</tr>
+<tr class="odd">
+<td>Dense (2, 2), 8% more tokens</td>
+<td>27%</td>
+<td>+8%</td>
+<td>−0.007</td>
+</tr>
+<tr class="group even">
+<td colspan="4">Against the untied model, on the same tokens</td>
+</tr>
+<tr class="odd">
+<td>Dense (2, 2), widened</td>
+<td>19–21%</td>
+<td>+15–22%</td>
+<td>−0.005 to −0.017</td>
+</tr>
+<tr class="even">
+<td>MoE, own attention per pass</td>
+<td>17%</td>
+<td>+9%</td>
+<td>+0.001</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-main-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;1 Parameters saved by looped models in our experiments. Each row compares a looped model with its reference at the stated extra training compute; the last column is the looped model’s validation loss minus the reference’s, in nats. Dense rows are <span class="math inline">(2,2)</span> models, means of three seeds; the MoE row is a single run against an untied twin on the same tokens (Section 4).
+</figcaption>
+</figure>
+</div>
+<section id="sec-intro" class="level2">
+<h2 class="anchored" data-anchor-id="sec-intro">1. Introduction</h2>
+<p>Looped transformers apply one block of layers several times for every token, so they add depth without adding weights. This is usually read as more computation for the same parameters. We read it the other way round. Parameters are what a model costs to store, move and serve, and training compute is what it costs to make; the two budgets are often separate, since a model trained once on a cluster may later run on hardware with a fixed amount of memory. At the same training compute and the same loss, how many fewer parameters does a looped model need?</p>
+<p>Recent work on looped mixture-of-experts models, SMELT <span class="citation" data-cites="wang2026smelt">[<a href="#ref-wang2026smelt" role="doc-biblioref">1</a>]</span>, studies the converse trade: at a fixed parameter count, a looped model reaches the same loss with 6.8–18% less training compute. We fix the compute instead and let model size and training tokens change, which makes the parameter saving a question of its own. It is the question behind the free-size results of our paper, <em>Truncate or Not? A Scaling Study of Looped Transformers with Truncated Backpropagation</em> <span class="citation" data-cites="xiong2026truncate">[<a href="#ref-xiong2026truncate" role="doc-biblioref">2</a>]</span>.</p>
+<p>The rest of this post follows three questions.</p>
+<ol type="1">
+<li>First, does a loop save parameters in practice? It does. A dense looped model with 27% fewer parameters beats the best model without loops for 8% more training compute (Section 3).</li>
+<li>Second, does the saving carry over to mixture-of-experts models? It does. Sharing the experts across two passes saves 17% of the parameters at matched loss for 9% more compute per token, and a purely looped model beats its untied twin with 11% fewer parameters and 18% more compute per token (Section 4).</li>
+<li>Third, why two loops? A scaling law fitted to nearly 600 training runs prices a loop in effective parameters: two fully trained loops are worth 1.91 copies of the looped block. Read at equal loss, the law gives a parameter–compute Pareto frontier whose knee is two fully trained loops, saving about a third of the parameters for 3% more compute (Sections 5 and 6).</li>
+</ol>
+</section>
+<section id="sec-looped" class="level2">
+<h2 class="anchored" data-anchor-id="sec-looped">2. Looped Models</h2>
+<p>We use the prelude–recurrent–coda architecture of Geiping et al. <span class="citation" data-cites="geiping2025scaling">[<a href="#ref-geiping2025scaling" role="doc-biblioref">3</a>]</span> and Schwethelm et al. <span class="citation" data-cites="schwethelm2026how">[<a href="#ref-schwethelm2026how" role="doc-biblioref">4</a>]</span>. A <em>prelude</em> maps tokens to hidden states, a shared <em>recurrent block</em> refines them over <span class="math inline">T</span> loops, and a <em>coda</em> predicts the next token. A <em>loop setting</em> <span class="math inline">(T,B)</span> runs <span class="math inline">T</span> loops forward and backpropagates through the last <span class="math inline">B</span>; <span class="math inline">B=T</span> is full backpropagation through time (BPTT), and <span class="math inline">(1,1)</span> is a standard transformer. The non-embedding parameters split into <span class="math inline">N=N_{\text{once}}+N_{\text{rec}}</span>: the prelude and coda run once per token, the recurrent block runs in every loop (<a href="#fig-arch" class="quarto-xref">Fig.&nbsp;1</a>).</p>
+<div id="fig-arch" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-arch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_arch.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Fig.&nbsp;1 The looped transformer, drawn for (T,B)=(4,2). (a) One training step: a stop gradient on s_{T-B}, so the first T-B loops (dashed) run forward only. (b) One loop; all loops share its weights. (c) Training FLOPs per parameter and token of each part."><img src="assets/fig_arch.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-arch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;1 <strong>The looped transformer, drawn for <span class="math inline">(T,B)=(4,2)</span>.</strong> (a) One training step: a stop gradient on <span class="math inline">s_{T-B}</span>, so the first <span class="math inline">T-B</span> loops (dashed) run forward only. (b) One loop; all loops share its weights. (c) Training FLOPs per parameter and token of each part.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-dense" class="level2">
+<h2 class="anchored" data-anchor-id="sec-dense">3. Parameter Savings in Dense Models</h2>
+<div class="results">
+<p><strong>Results.</strong> At the same training compute, compute-optimal <span class="math inline">(2,2)</span> models match the best models without loops with 27–32% fewer parameters; with 8% more training compute, a <span class="math inline">(2,2)</span> model with 27% fewer parameters beats them. Against the untied model on the same tokens, looped models with a fifth fewer parameters win for 15–22% more compute per token.</p>
+</div>
+<p>We compare looped and standard dense models in two ways: compute-optimal pairs, and the untied model on the same tokens.</p>
+<section id="compute-optimal-pairs" class="level3">
+<h3 class="anchored" data-anchor-id="compute-optimal-pairs">3.1 Compute-Optimal Pairs</h3>
+<p>At three training budgets, we train <span class="math inline">(1,1)</span> and <span class="math inline">(2,2)</span> each at the size and token count that minimize its own loss, with three seeds per model (<a href="#tbl-pairs" class="quarto-xref">Tab.&nbsp;2</a>).</p>
+<div id="tbl-pairs" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-pairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Compute (FLOPs)</th>
+<th style="text-align: right;">(1, 1) size</th>
+<th style="text-align: right;">(1, 1) loss</th>
+<th style="text-align: right;">(2, 2) size</th>
+<th style="text-align: right;">(2, 2) loss</th>
+<th style="text-align: right;">Gap (10⁻³ nats)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1.6 × 10¹⁸</td>
+<td style="text-align: right;">115M</td>
+<td style="text-align: right;">2.7098</td>
+<td style="text-align: right;">79M</td>
+<td style="text-align: right;">2.7177</td>
+<td style="text-align: right;">+7.9 ± 1.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6.0 × 10¹⁸</td>
+<td style="text-align: right;">239M</td>
+<td style="text-align: right;">2.5215</td>
+<td style="text-align: right;">162M</td>
+<td style="text-align: right;">2.5253</td>
+<td style="text-align: right;">+3.8 ± 1.8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2.1 × 10¹⁹</td>
+<td style="text-align: right;">471M</td>
+<td style="text-align: right;">2.3663</td>
+<td style="text-align: right;">344M</td>
+<td style="text-align: right;">2.3677</td>
+<td style="text-align: right;">+1.4 ± 1.7</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2.2 × 10¹⁹ (+8%)</td>
+<td style="text-align: right;">471M</td>
+<td style="text-align: right;">2.3663</td>
+<td style="text-align: right;">344M</td>
+<td style="text-align: right;"><strong>2.3590</strong></td>
+<td style="text-align: right;"><strong>−7.3 ± 1.8</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-pairs-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;2 Compute-optimal pairs. Each model is trained at the size and token count that minimize its loss for the compute; loss is the mean of three seeds, and the gap is <span class="math inline">(2,2)</span> minus <span class="math inline">(1,1)</span> with one standard error. The last row trains the 344M <span class="math inline">(2,2)</span> model on 8% more tokens.
+</figcaption>
+</figure>
+</div>
+<div class="finding">
+<p><strong>Finding 1: Two fully trained loops save 27–32% of the parameters at the same compute.</strong> The gap to the best model without loops closes as the budget grows, to 0.001 nats at <span class="math inline">2.1\times10^{19}</span> FLOPs, and 8% more tokens turn it into a lead of 0.007 nats.</p>
+</div>
+<p>At every budget the looped model has 27–32% fewer non-embedding parameters and nearly the same loss. Trained on 8% more tokens, and so with 8% more compute, the 344M <span class="math inline">(2,2)</span> model beats the 471M model without loops by 0.007 nats (<a href="#fig-pair" class="quarto-xref">Fig.&nbsp;2</a>).</p>
+<div id="fig-pair" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pair-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_pair_bars.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Fig.&nbsp;2 Two fully trained loops against no looping at 2.1\times10^{19} FLOPs. Parameters and compute of the (2,2) model relative to the compute-optimal model without loops. With 8% more compute, (2,2) reaches a lower loss with 27% fewer non-embedding parameters."><img src="assets/fig_pair_bars.png" class="img-fluid figure-img" style="width:62.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pair-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;2 <strong>Two fully trained loops against no looping at <span class="math inline">2.1\times10^{19}</span> FLOPs.</strong> Parameters and compute of the <span class="math inline">(2,2)</span> model relative to the compute-optimal model without loops. With 8% more compute, <span class="math inline">(2,2)</span> reaches a lower loss with 27% fewer non-embedding parameters.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="against-the-untied-model" class="level3">
+<h3 class="anchored" data-anchor-id="against-the-untied-model">3.2 Against the Untied Model</h3>
+<p>The pairs let both models choose their size. A tighter test keeps everything else equal: the <em>untied model</em> is the same network with a separate copy of the recurrent block for each loop. For two loops it has about 1.5 times the parameters at the same compute per token. We train both at four sizes on the same tokens, about 18 tokens per parameter of the looped model, with three seeds each.</p>
+<div class="finding">
+<p><strong>Finding 2: Widened to about 80% of the untied model’s parameters, the looped model wins.</strong> With 15–22% more compute per token, it beats the untied model by 0.005–0.017 nats in all twelve seed pairs.</p>
+</div>
+<p>At the untied model’s width the looped model trails it by 0.009–0.017 nats; widening it reverses the gap at every size (<a href="#fig-twin-dense" class="quarto-xref">Fig.&nbsp;3</a>).</p>
+<div id="fig-twin-dense" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-twin-dense-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_untied_dense.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Fig.&nbsp;3 With about 80% of the parameters and 15–22% more compute per token, widened looped models beat their untied twins. Each row is a (2,2) model, widened to about 80% of its untied model’s non-embedding parameters and trained on the same tokens, at four sizes. Left and middle: its parameters and compute per token as percentages of the untied model (dashed lines). Right: its loss minus the untied model’s; mean of three seeds with one standard error."><img src="assets/fig_untied_dense.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-twin-dense-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;3 <strong>With about 80% of the parameters and 15–22% more compute per token, widened looped models beat their untied twins.</strong> Each row is a <span class="math inline">(2,2)</span> model, widened to about 80% of its untied model’s non-embedding parameters and trained on the same tokens, at four sizes. Left and middle: its parameters and compute per token as percentages of the untied model (dashed lines). Right: its loss minus the untied model’s; mean of three seeds with one standard error.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-moe" class="level2">
+<h2 class="anchored" data-anchor-id="sec-moe">4. Parameter Savings in Mixture-of-Experts Models</h2>
+<div class="results">
+<p><strong>Results.</strong> 1) A looped MoE model that shares its experts across its two passes matches its untied twin with 17% fewer parameters for 9% more compute per token. 2) A purely looped MoE model beats the twin with 11% fewer parameters for 18% more compute per token.</p>
+</div>
+<section id="configurations" class="level3">
+<h3 class="anchored" data-anchor-id="configurations">4.1 Configurations</h3>
+<p>The dense results show a trade: a loop saves parameters at the same loss for a little more compute. We test it in mixture-of-experts models, where the experts hold nearly all of the parameters, with the untied comparison of Section 3.2. The reference is the <em>untied twin</em> of SMELT’s 100M tier <span class="citation" data-cites="wang2026smelt">[<a href="#ref-wang2026smelt" role="doc-biblioref">1</a>]</span>: 10 layers of width 576 with 96 experts per layer (8 active per token), whose layers 3–7 run twice with separate weights for each pass, 1,068M non-embedding parameters in total. Both looped models have 11 layers and run their middle five twice; all three models train on the same 12.58B FineWeb-Edu tokens, with one seed each (<a href="#tbl-moe" class="quarto-xref">Tab.&nbsp;3</a>).</p>
+<ul>
+<li><strong>Shared experts.</strong> The first looped model, of width 592 with 104 experts per layer, shares the experts and the router between its two passes; they hold almost all of the parameters. Each pass keeps its own attention and norms, and the second pass’s copy adds only 0.5% to the parameter count. Foil <span class="citation" data-cites="wang2026foil">[<a href="#ref-wang2026foil" role="doc-biblioref">5</a>]</span> calls this untying the attention and finds that it lowers the loss of looped MoE models at no extra compute.</li>
+<li><strong>Purely looped.</strong> The second shares every weight between its two passes. It is wider, with width 624 and 100 experts per layer.</li>
+</ul>
+<div id="tbl-moe" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-moe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">Parameters</th>
+<th style="text-align: right;">Compute per token</th>
+<th style="text-align: right;">Loss − twin</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Untied twin</td>
+<td style="text-align: right;">1,068M</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Own attention per pass</td>
+<td style="text-align: right;">892M (<strong>0.835</strong>)</td>
+<td style="text-align: right;">1.094</td>
+<td style="text-align: right;">+0.0008</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">All weights shared</td>
+<td style="text-align: right;">950M (<strong>0.889</strong>)</td>
+<td style="text-align: right;">1.176</td>
+<td style="text-align: right;"><strong>−0.0056</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-moe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;3 The MoE models: non-embedding parameters (in brackets, relative to the twin), training compute per token relative to the twin, and validation loss minus the twin’s at 12.58B tokens.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="results" class="level3">
+<h3 class="anchored" data-anchor-id="results">4.2 Results</h3>
+<div class="finding">
+<p><strong>Finding 1: Sharing the experts across loops saves 17% of the parameters at matched loss.</strong> The looped model with its own attention per pass matches the untied twin, at +0.0008 nats, for 9% more compute per token.</p>
+</div>
+<div class="finding">
+<p><strong>Finding 2: A purely looped MoE model beats its untied twin.</strong> With 11% fewer parameters and 18% more compute per token, it is 0.006 nats ahead.</p>
+</div>
+<p>As in dense models, a looped model with fewer parameters than its untied twin matches or beats it for some extra compute per token (<a href="#fig-twin-moe" class="quarto-xref">Fig.&nbsp;4</a>).</p>
+<div id="fig-twin-moe" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-twin-moe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_untied_moe.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Fig.&nbsp;4 With 11–17% fewer parameters and 9–18% more compute per token, looped MoE models match or beat their untied twin. The two looped models of Tab.&nbsp;3 against the untied twin, on the same tokens, one seed each. Panels as in Fig.&nbsp;3; grey band: the noise of a single-seed comparison, ±0.005 nats."><img src="assets/fig_untied_moe.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-twin-moe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;4 <strong>With 11–17% fewer parameters and 9–18% more compute per token, looped MoE models match or beat their untied twin.</strong> The two looped models of <a href="#tbl-moe" class="quarto-xref">Tab.&nbsp;3</a> against the untied twin, on the same tokens, one seed each. Panels as in <a href="#fig-twin-dense" class="quarto-xref">Fig.&nbsp;3</a>; grey band: the noise of a single-seed comparison, ±0.005 nats.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="sec-law" class="level2">
+<h2 class="anchored" data-anchor-id="sec-law">5. A Scaling Law for Looped Models</h2>
+<p>Why does looping twice save so much, and what do other loop settings save? A scaling law fitted to nearly 600 training runs answers both, by pricing every loop setting in effective parameters.</p>
+<div class="results">
+<p><strong>Results.</strong> A loop setting <span class="math inline">(T,B)</span> makes the looped block count <span class="math inline">g(T,B)</span> times in an effective parameter count. Fitted to nearly 600 training runs, <span class="math inline">g</span> saturates at about three copies of the block, and two fully trained loops are worth 1.91 copies.</p>
+</div>
+<section id="effective-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="effective-parameters">5.1 Effective Parameters</h3>
+<p>A loop can only enlarge the block that loops. We therefore write the loss with an <em>effective parameter count</em> <span class="math inline">N_{\text{eff}}</span>, the size of a model without loops that reaches the same loss on the same tokens: the recurrent block counts <span class="math inline">g(T,B)</span> times, and the prelude and coda count once.</p>
+<div class="law">
+<div class="label">
+<p>The law</p>
+</div>
+<div class="law-wide">
+<p><span id="eq-law"><span class="math display">
+\begin{gathered}
+L=E+\left[A\left(\frac{N_{\text{eff}}}{N_0}\right)^{-\alpha}+H\left(\frac{D}{D_0}\right)^{-\beta}\right]^{\kappa}\\[4pt]
+N_{\text{eff}}=N_{\text{once}}+g(T,B)\,N_{\text{rec}},\qquad g(T,B)=\exp\!\left[c\left(1-T^{-p}B^{-q}\right)\right]
+\end{gathered}
+\tag{1}</span></span></p>
+</div>
+<div class="law-narrow">
+<p><span class="math display">
+\begin{gathered}
+L=E+\left[A\left(\frac{N_{\text{eff}}}{N_0}\right)^{-\alpha}+H\left(\frac{D}{D_0}\right)^{-\beta}\right]^{\kappa}\\[4pt]
+N_{\text{eff}}=N_{\text{once}}+g(T,B)\,N_{\text{rec}}\\[2pt]
+g(T,B)=\exp\!\left[c\left(1-T^{-p}B^{-q}\right)\right]
+\end{gathered}\tag{1}
+</span></p>
+</div>
+</div>
+<p>Here <span class="math inline">D</span> is the number of training tokens, and the bracket is the coupled size–data law of Videau et al. <span class="citation" data-cites="videau2026skaling">[<a href="#ref-videau2026skaling" role="doc-biblioref">6</a>]</span> with fixed scales <span class="math inline">N_0=2.4\times10^{8}</span> and <span class="math inline">D_0=2^{30}</span>. The <em>looping coefficient</em> <span class="math inline">g(T,B)</span> says how many copies of the recurrent block a loop setting is worth. Its form follows from four requirements:</p>
+<ul>
+<li><strong>Normalization.</strong> <span class="math inline">g(1,1)=1</span>: a single loop is a standard transformer.</li>
+<li><strong>Monotonicity.</strong> <span class="math inline">g</span> increases in <span class="math inline">T</span> and in <span class="math inline">B</span>: running or training more loops raises it.</li>
+<li><strong>No gradient, no gain.</strong> <span class="math inline">g(T,0)=0</span>: with no trained loop, the recurrent block adds no effective size.</li>
+<li><strong>Saturation.</strong> <span class="math inline">\sup_{B\le T} g(T,B)&lt;\infty</span>: finite weights store finite information.</li>
+</ul>
+<p>We fit all nine coefficients on 230 configurations from nearly 600 training runs on FineWeb-Edu <span class="citation" data-cites="penedo2024fineweb">[<a href="#ref-penedo2024fineweb" role="doc-biblioref">7</a>]</span>: five sizes from 58M to 919M non-embedding parameters, 1.1 to 1,291 training tokens per parameter, and fifteen loop settings with <span class="math inline">T</span> up to 16 (<a href="#tbl-coef" class="quarto-xref">Tab.&nbsp;4</a>, <a href="#tbl-fit" class="quarto-xref">Tab.&nbsp;5</a>).</p>
+<div id="tbl-coef" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-coef-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: center;"><span class="math inline">E</span></th>
+<th style="text-align: center;"><span class="math inline">A</span></th>
+<th style="text-align: center;"><span class="math inline">H</span></th>
+<th style="text-align: center;"><span class="math inline">\alpha</span></th>
+<th style="text-align: center;"><span class="math inline">\beta</span></th>
+<th style="text-align: center;"><span class="math inline">\kappa</span></th>
+<th style="text-align: center;"><span class="math inline">c</span></th>
+<th style="text-align: center;"><span class="math inline">p</span></th>
+<th style="text-align: center;"><span class="math inline">q</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;">0.299</td>
+<td style="text-align: center;">6.487</td>
+<td style="text-align: center;">7.633</td>
+<td style="text-align: center;">0.306</td>
+<td style="text-align: center;">0.393</td>
+<td style="text-align: center;">0.325</td>
+<td style="text-align: center;">1.112</td>
+<td style="text-align: center;">0.237</td>
+<td style="text-align: center;">1.022</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-coef-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;4 The nine coefficients of the law (1), fitted on 230 configurations.
+</figcaption>
+</figure>
+</div>
+<div id="tbl-fit" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Evaluation</th>
+<th style="text-align: right;">Fits</th>
+<th style="text-align: right;">RMSE (10⁻³ nats)</th>
+<th style="text-align: right;">MAE (10⁻³ nats)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">In-sample</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">6.14</td>
+<td style="text-align: right;">4.91</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">One configuration out</td>
+<td style="text-align: right;">230</td>
+<td style="text-align: right;">6.40</td>
+<td style="text-align: right;">5.11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">One model size out</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">7.48</td>
+<td style="text-align: right;">5.89</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">One token budget out</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">6.42</td>
+<td style="text-align: right;">5.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">One (<em>T</em>, <em>B</em>) setting out</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">8.67</td>
+<td style="text-align: right;">6.74</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-fit-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;5 Fit and holdout errors of the law: in-sample, and with one configuration, model size, token budget or loop setting left out of each fit.
+</figcaption>
+</figure>
+</div>
+<div class="finding">
+<p><strong>Finding 1: A shared block is worth at most about three copies of itself, and two fully trained loops are worth almost two.</strong> The ceiling <span class="math inline">e^{c}\approx3.0</span> bounds <span class="math inline">g</span> however often the block loops, and <span class="math inline">g(2,2)\approx1.91</span>.</p>
+</div>
+<p>The exponents add one more reading: since <span class="math inline">q&gt;p</span>, doubling the trained loops <span class="math inline">B</span> adds more than doubling the forward loops <span class="math inline">T</span>.</p>
+</section>
+<section id="compute" class="level3">
+<h3 class="anchored" data-anchor-id="compute">5.2 Compute</h3>
+<p>A backward pass costs twice a forward pass. Counting two FLOPs per parameter and token for each forward pass and four for each backward pass, a looped model trains at the cost of a model without loops with <span class="math inline">N_{\text{comp}}</span> parameters:</p>
+<p><span id="eq-compute"><span class="math display">
+C\simeq6D\,N_{\text{comp}},\qquad N_{\text{comp}}=N_{\text{once}}+\frac{T+2B}{3}\,N_{\text{rec}}.
+\tag{2}</span></span></p>
+<p>A looped model thus has two sizes: in loss it is worth <span class="math inline">N_{\text{eff}}</span>, in compute it costs <span class="math inline">N_{\text{comp}}</span>. Their ratio <span class="math inline">\chi=N_{\text{comp}}/N_{\text{eff}}</span> is the compute paid for each effective parameter, which turns every loop setting into a price in parameters.</p>
+</section>
+</section>
+<section id="sec-frontier" class="level2">
+<h2 class="anchored" data-anchor-id="sec-frontier">6. The Parameter–Compute Pareto Frontier</h2>
+<div class="results">
+<p><strong>Results.</strong> At the loss of the best model without loops, every loop setting costs extra training compute and saves parameters. Full BPTT forms the Pareto frontier. Two fully trained loops are its knee, saving 32% of the parameters for 3.1% more compute, and the saving saturates near one half.</p>
+</div>
+<p>At equal loss, every loop setting saves some parameters and costs some extra training compute, relative to the best model without loops. Figure 2 of our paper <span class="citation" data-cites="xiong2026truncate">[<a href="#ref-xiong2026truncate" role="doc-biblioref">2</a>]</span> plots the two for every setting, reproduced as <a href="#fig-free-size" class="quarto-xref">Fig.&nbsp;5</a>; the settings that save the most parameters for their compute form a Pareto frontier.</p>
+<p>With model size and tokens free, the price <span class="math inline">\chi</span> is all that separates a loop setting from the model without loops. Substituting <span class="math inline">N_{\text{comp}}=\chi N_{\text{eff}}</span> into (<a href="#eq-compute" class="quarto-xref">2</a>) gives <span class="math inline">C=6D\,\chi N_{\text{eff}}</span>: a loop setting buys the same pairs <span class="math inline">(N_{\text{eff}},D)</span> as a model without loops, at <span class="math inline">\chi</span> times the price. To match the loss of the compute-optimal model without loops, it must spend <span class="math inline">\chi</span> times its compute and reach the same effective size and tokens. Its trainable parameters are that effective size divided by <span class="math inline">G=N_{\text{eff}}/N</span>. Writing <span class="math inline">\rho=N_{\text{rec}}/N</span>, which is about one half in our models,</p>
+<p><span id="eq-ratios"><span class="math display">
+\begin{gathered}
+\frac{C_{(T,B)}}{C_{(1,1)}}=\chi(T,B)=\frac{1-\rho+\rho\,(T+2B)/3}{1-\rho+\rho\,g(T,B)}\\[6pt]
+\frac{N_{(T,B)}}{N_{(1,1)}}=\frac{1}{1-\rho+\rho\,g(T,B)}
+\end{gathered}
+\tag{3}</span></span></p>
+<p>Both ratios are the same at every compute budget under this FLOP count, so a single picture covers every budget.</p>
+<div id="fig-free-size" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-free-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_law_free_size.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Fig.&nbsp;5 The parameter–compute Pareto frontier, at the loss of the best model without loops. Each marker is a loop setting (T,B) at its compute-optimal size and tokens. Horizontal: the training compute it needs, relative to the model without loops at the same loss. Vertical: the fraction of non-embedding parameters it saves. Filled markers are full BPTT (B=T) and form the frontier; the dashed curve is the law for full BPTT at any T from 2 to 16, and dotted lines join settings with the same T."><img src="assets/fig_law_free_size.png" class="img-fluid figure-img"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-free-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;5 <strong>The parameter–compute Pareto frontier, at the loss of the best model without loops.</strong> Each marker is a loop setting <span class="math inline">(T,B)</span> at its compute-optimal size and tokens. Horizontal: the training compute it needs, relative to the model without loops at the same loss. Vertical: the fraction of non-embedding parameters it saves. Filled markers are full BPTT (<span class="math inline">B=T</span>) and form the frontier; the dashed curve is the law for full BPTT at any <span class="math inline">T</span> from 2 to 16, and dotted lines join settings with the same <span class="math inline">T</span>.
+</figcaption>
+</figure>
+</div>
+<div class="finding">
+<p><strong>Finding 1: A loop trades compute for parameters.</strong> Every loop setting needs more compute than the best model without loops, and every one buys a smaller model at the same loss.</p>
+</div>
+<p>Every setting has <span class="math inline">\chi\ge1</span>, so at a fixed compute the best model has no loop, as Schwethelm et al. <span class="citation" data-cites="schwethelm2026how">[<a href="#ref-schwethelm2026how" role="doc-biblioref">4</a>]</span> also find. What a loop offers instead is a discount on parameters, paid for in compute.</p>
+<div class="finding">
+<p><strong>Finding 2: Full BPTT is the frontier.</strong> For the same compute, every truncated setting saves fewer parameters than full BPTT.</p>
+</div>
+<p>Truncation pays for forward loops that carry no gradient, so its markers lie below the dashed curve of full BPTT.</p>
+<div class="finding">
+<p><strong>Finding 3: Two fully trained loops are the knee, and the saving saturates near one half.</strong> <span class="math inline">(2,2)</span> saves 32% of the parameters for 3.1% more compute; sixteen loops save 50% of the parameters for 334% more compute. The dense pairs of Section 3.1 measure this knee directly.</p>
+</div>
+<div id="tbl-frontier" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<div aria-describedby="tbl-frontier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Loop setting</th>
+<th style="text-align: right;">Extra training compute</th>
+<th style="text-align: right;">Parameters saved</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">(2, 2)</td>
+<td style="text-align: right;">+3.1%</td>
+<td style="text-align: right;"><strong>31.6%</strong></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">(4, 4)</td>
+<td style="text-align: right;">+43%</td>
+<td style="text-align: right;">43.3%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">(8, 8)</td>
+<td style="text-align: right;">+138%</td>
+<td style="text-align: right;">47.8%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">(16, 16)</td>
+<td style="text-align: right;">+334%</td>
+<td style="text-align: right;">49.6%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-tbl" id="tbl-frontier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Tab.&nbsp;6 The full-BPTT frontier of <a href="#fig-free-size" class="quarto-xref">Fig.&nbsp;5</a>: the extra training compute each setting needs and the parameters it saves, at the loss of the best model without loops.
+</figcaption>
+</figure>
+</div>
+<p>Since <span class="math inline">g\le e^{c}\approx3.04</span> and half the parameters loop, no setting can save more than <span class="math inline">1-1/(0.49+0.51\cdot3.04)\approx51\%</span> of the parameters, whatever the compute (<a href="#tbl-frontier" class="quarto-xref">Tab.&nbsp;6</a>). The first step is cheap because sharing costs little. Replace the shared block of a <span class="math inline">(2,2)</span> model with two untied copies: the copies cost the same compute per token, but they are worth <span class="math inline">N_{\text{once}}+2N_{\text{rec}}</span> effective parameters, against <span class="math inline">N_{\text{once}}+g(2,2)\,N_{\text{rec}}</span> for the shared block. With <span class="math inline">g(2,2)\approx1.91</span>, sharing loses only 9% of one copy while storing half the recurrent weights; <a href="#fig-copies" class="quarto-xref">Fig.&nbsp;6</a> shows how this gap widens for more loops.</p>
+<div id="fig-copies" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-copies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="assets/fig_loop_gain_vs_weights.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Fig.&nbsp;6 Loops against untied copies. The fitted g(T,T) (solid) stays below T untied copies (dashed) for T\ge2; the gap is smallest at T=2."><img src="assets/fig_loop_gain_vs_weights.png" class="img-fluid figure-img" style="width:62.0%"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-copies-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Fig.&nbsp;6 <strong>Loops against untied copies.</strong> The fitted <span class="math inline">g(T,T)</span> (solid) stays below <span class="math inline">T</span> untied copies (dashed) for <span class="math inline">T\ge2</span>; the gap is smallest at <span class="math inline">T=2</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="sec-conclusions" class="level2">
+<h2 class="anchored" data-anchor-id="sec-conclusions">Conclusions</h2>
+<p>We asked how many parameters a loop saves at the same training compute. In dense models, compute-optimal <span class="math inline">(2,2)</span> models match the best models without loops with 27–32% fewer parameters at the same training compute, and beat them with 27% fewer parameters for 8% more training compute. In mixture-of-experts models, where the experts hold nearly all of the parameters, sharing the experts across loops saves 17% of the parameters for 9% more compute per token, and sharing every weight saves 11% of the parameters and beats the untied twin for 18% more compute per token.</p>
+<p>A scaling law fitted to nearly 600 training runs explains the trade. It prices every loop setting in effective parameters, and read at equal loss it gives a parameter–compute Pareto frontier: no loop is free, full BPTT forms the frontier, and two fully trained loops are its knee, saving about a third of the parameters for 3% more compute.</p>
+<p>A loop therefore moves the cost of a model from memory to computation. That trade pays whenever the parameters, rather than the training compute, are the binding budget.</p>
+</section>
+<section id="sec-references" class="level2">
+<h2 class="anchored" data-anchor-id="sec-references">References</h2>
+<div id="refs" class="references csl-bib-body" data-entry-spacing="0" role="list">
+<div id="ref-wang2026smelt" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[1] </div><div class="csl-right-inline">Shaowen Wang, Ge Zhang, Kairong Luo, Yuhao Wu, Shaofan Liu, Jiaheng Liu, Wenhao Huang, Shen Yan, and Jian Li. <a href="https://arxiv.org/abs/2609.01343"><span class="nocase">SMELT: Scaling Laws for Compute-Matched MoE Looped Transformers</span></a>. arXiv preprint arXiv:2609.01343, 2026.</div>
+</div>
+<div id="ref-xiong2026truncate" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[2] </div><div class="csl-right-inline">Xuyuan Xiong, Siyu Chen, Zihan Shao, Yue Su, Weiyang Jin, Ping Luo, Zhuoran Yang, and Xihui Liu. <a href="https://arxiv.org/abs/2610.26030"><span class="nocase">Truncate or Not? A Scaling Study of Looped Transformers with Truncated Backpropagation</span></a>. arXiv preprint arXiv:2610.26030, 2026.</div>
+</div>
+<div id="ref-geiping2025scaling" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[3] </div><div class="csl-right-inline">Jonas Geiping, Sean McLeish, Neel Jain, John Kirchenbauer, Siddharth Singh, Brian R. Bartoldson, Bhavya Kailkhura, Abhinav Bhatele, and Tom Goldstein. <a href="https://arxiv.org/abs/2502.05171"><span class="nocase">Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</span></a>. arXiv preprint arXiv:2502.05171, 2025.</div>
+</div>
+<div id="ref-schwethelm2026how" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[4] </div><div class="csl-right-inline">Kristian Schwethelm, Daniel Rueckert, and Georgios Kaissis. <a href="https://arxiv.org/abs/2604.21106"><span class="nocase">How Much Is One Recurrence Worth? Iso-Depth Scaling Laws for Looped Language Models</span></a>. arXiv preprint arXiv:2604.21106, 2026.</div>
+</div>
+<div id="ref-wang2026foil" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[5] </div><div class="csl-right-inline">Shouren Wang, Chuang Ma, Mohsen Hariri, Debargha Ganguly, Wang Yang, Xiaoqing Tong, Qianying Liu, Xiaotian Han, and Vipin Chaudhary. <a href="https://arxiv.org/abs/2609.35751"><span class="nocase">How to Loop MoE: Flatten the Experts, Untie the Attention</span></a>. arXiv preprint arXiv:2609.35751, 2026.</div>
+</div>
+<div id="ref-videau2026skaling" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[6] </div><div class="csl-right-inline">Mathurin Videau, Badr Youbi-Idrissi, David Lopez-Paz, and Kartik Ahuja. <a href="https://arxiv.org/abs/2608.07222"><span class="nocase">Skaling: Chinchilla’s Exponents Meet Kaplan’s Coupling</span></a>. arXiv preprint arXiv:2608.07222, 2026.</div>
+</div>
+<div id="ref-penedo2024fineweb" class="csl-entry" role="listitem">
+<div class="csl-left-margin">[7] </div><div class="csl-right-inline">Guilherme Penedo, Hynek Kydlı́ček, Loubna Ben Allal, Anton Lozhkov, Margaret Mitchell, Colin Raffel, Leandro Von Werra, and Thomas Wolf. <a href="https://arxiv.org/abs/2406.17557"><span class="nocase">The FineWeb Datasets: Decanting the Web for the Finest Text Data at Scale</span></a>. arXiv preprint arXiv:2406.17557, 2024.</div>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    // Ensure there is a toggle, if there isn't float one in the top right
+    if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+      const a = window.document.createElement('a');
+      a.classList.add('top-right');
+      a.classList.add('quarto-color-scheme-toggle');
+      a.href = "";
+      a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+      const i = window.document.createElement("i");
+      i.classList.add('bi');
+      a.appendChild(i);
+      window.document.body.appendChild(a);
+    }
+    setColorSchemeToggle(hasAlternateSentinel())
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"closeEffect":"zoom","descPosition":"bottom","loop":false,"openEffect":"zoom","selector":".lightbox"});
+(function() {
+  let previousOnload = window.onload;
+  window.onload = () => {
+    if (previousOnload) {
+      previousOnload();
+    }
+    lightboxQuarto.on('slide_before_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      const href = trigger.getAttribute('href');
+      if (href !== null) {
+        const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+        if (imgEl !== null) {
+          const srcAttr = imgEl.getAttribute("src");
+          if (srcAttr && srcAttr.startsWith("data:")) {
+            slideConfig.href = srcAttr;
+          }
+        }
+      } 
+    });
+  
+    lightboxQuarto.on('slide_after_load', (data) => {
+      const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(slideNode);
+      }
+    });
+  
+  };
+  
+})();
+          </script>
+
+
+
+
+<script src="index_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
