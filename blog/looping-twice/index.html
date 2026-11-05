@@ -97,9 +97,9 @@ div.csl-indent {
 <link href="index_files/libs/quarto-html/quarto-syntax-highlighting-bf27225e3a48a9273f3daa8f8e829971.css" rel="stylesheet" class="quarto-color-scheme-extra" id="quarto-text-highlighting-styles">
 <script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="index_files/libs/bootstrap/bootstrap-5a1555e8c1366e9487817a65ebf8d1eb.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
-<link href="index_files/libs/bootstrap/bootstrap-dark-a0666dbb4da9932889c11ac6d1a9b120.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
-<link href="index_files/libs/bootstrap/bootstrap-5a1555e8c1366e9487817a65ebf8d1eb.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
+<link href="index_files/libs/bootstrap/bootstrap-ddbf77e1e3260ce74f0f2279f2ea1283.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="index_files/libs/bootstrap/bootstrap-dark-d59f9006a47b35bd9724bd2f27ba07da.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<link href="index_files/libs/bootstrap/bootstrap-ddbf77e1e3260ce74f0f2279f2ea1283.min.css" rel="stylesheet" append-hash="true" class="quarto-color-scheme-extra" id="quarto-bootstrap" data-mode="light">
 <script src="index_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
 <link href="index_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="index_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
@@ -120,7 +120,7 @@ div.csl-indent {
 <meta property="og:description" content="Looping twice saves parameters for little added compute. A dense looped transformer matches the best standard model with 27–32% fewer parameters at the same training compute and beats it with 27% fewer parameters for 8% more training compute; a looped mixture-of-experts model matches its untied twin with 17% fewer parameters for 9% more compute per token.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://xjxyys.github.io/blog/looping-twice/">
-<meta property="og:image" content="https://xjxyys.github.io/blog/looping-twice/assets/hero.png">
+<meta property="og:image" content="https://xjxyys.github.io/blog/looping-twice/assets/card.png">
 <meta name="twitter:card" content="summary_large_image">
 <script>
   // Dark mode: each image in assets/ has a copy named *_dark.png (scripts/make_figs.py). Show the copy that fits the
@@ -414,7 +414,7 @@ window.Quarto = {
 
 
 <div class="cover">
-<p><a href="assets/hero.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="assets/hero.png" class="img-fluid" alt="Loop the middle layers twice, 27% fewer parameters: the best model without loops, fourteen layers with 471M parameters, above a looped model of twelve layers whose middle six run twice, with 344M parameters and a lower loss for 8% more training compute."></a></p>
+<p><a href="assets/hero.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1"><img src="assets/hero.png" class="img-fluid" alt="A standard transformer of fourteen layers with 471M parameters next to a looped transformer of twelve layers whose middle six run twice, with 344M parameters: 27% fewer parameters for 8% more training compute and a lower loss."></a></p>
 </div>
 <header class="post-header">
   <h1 class="post-title">The Benefit of Looping Twice:<span class="post-title-sub">Parameter Savings with Little Added Compute</span></h1>
@@ -514,18 +514,18 @@ Tab.&nbsp;1 Parameters saved by looped models in our experiments. Each row compa
 <div id="fig-arch" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-arch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="assets/fig_arch.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Fig.&nbsp;1 The looped transformer, drawn for (T,B)=(4,2). (a) One training step: a stop gradient on s_{T-B}, so the first T-B loops (dashed) run forward only. (b) One loop; all loops share its weights. (c) Training FLOPs per parameter and token of each part."><img src="assets/fig_arch.png" class="img-fluid figure-img"></a>
+<a href="assets/fig_arch.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Fig.&nbsp;1 The looped transformer, drawn for two loops. The prelude maps tokens to the hidden state s_0; the recurrent block, whose weights all loops share, refines it T times, each loop reading s_0 and the previous state; the coda predicts the next token. The block is stored once, so its N_{\text{rec}} parameters count once however many times it runs."><img src="assets/fig_arch.png" class="img-fluid figure-img"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-arch-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Fig.&nbsp;1 <strong>The looped transformer, drawn for <span class="math inline">(T,B)=(4,2)</span>.</strong> (a) One training step: a stop gradient on <span class="math inline">s_{T-B}</span>, so the first <span class="math inline">T-B</span> loops (dashed) run forward only. (b) One loop; all loops share its weights. (c) Training FLOPs per parameter and token of each part.
+Fig.&nbsp;1 <strong>The looped transformer, drawn for two loops.</strong> The prelude maps tokens to the hidden state <span class="math inline">s_0</span>; the recurrent block, whose weights all loops share, refines it <span class="math inline">T</span> times, each loop reading <span class="math inline">s_0</span> and the previous state; the coda predicts the next token. The block is stored once, so its <span class="math inline">N_{\text{rec}}</span> parameters count once however many times it runs.
 </figcaption>
 </figure>
 </div>
 </section>
 <section id="sec-dense" class="level2">
 <h2 class="anchored" data-anchor-id="sec-dense">3. Parameter Savings in Dense Models</h2>
-<div class="results">
-<p><strong>Results.</strong> At the same training compute, compute-optimal <span class="math inline">(2,2)</span> models match the best models without loops with 27–32% fewer parameters; with 8% more training compute, a <span class="math inline">(2,2)</span> model with 27% fewer parameters beats them. Against the untied model on the same tokens, looped models with a fifth fewer parameters win for 15–22% more compute per token.</p>
+<div class="finding">
+<p><strong>Finding 1: Two fully trained loops save 27–32% of the parameters at the same training compute.</strong> With 8% more training compute, a <span class="math inline">(2,2)</span> model with 27% fewer parameters beats the best model without loops; against the untied model on the same tokens, looped models with a fifth fewer parameters win for 15–22% more compute per token.</p>
 </div>
 <p>We compare looped and standard dense models in two ways: compute-optimal pairs, and the untied model on the same tokens.</p>
 <section id="compute-optimal-pairs" class="level3">
@@ -586,10 +586,7 @@ Tab.&nbsp;2 Compute-optimal pairs. Each model is trained at the size and token c
 </figcaption>
 </figure>
 </div>
-<div class="finding">
-<p><strong>Finding 1: Two fully trained loops save 27–32% of the parameters at the same compute.</strong> The gap to the best model without loops closes as the budget grows, to 0.001 nats at <span class="math inline">2.1\times10^{19}</span> FLOPs, and 8% more tokens turn it into a lead of 0.007 nats.</p>
-</div>
-<p>At every budget the looped model has 27–32% fewer non-embedding parameters and nearly the same loss. Trained on 8% more tokens, and so with 8% more compute, the 344M <span class="math inline">(2,2)</span> model beats the 471M model without loops by 0.007 nats (<a href="#fig-pair" class="quarto-xref">Fig.&nbsp;2</a>).</p>
+<p>At every budget the looped model has 27–32% fewer non-embedding parameters and nearly the same loss, and the gap closes as the budget grows, to 0.001 nats at <span class="math inline">2.1\times10^{19}</span> FLOPs. Trained on 8% more tokens, and so with 8% more compute, the 344M <span class="math inline">(2,2)</span> model beats the 471M model without loops by 0.007 nats (<a href="#fig-pair" class="quarto-xref">Fig.&nbsp;2</a>).</p>
 <div id="fig-pair" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-pair-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -604,10 +601,7 @@ Fig.&nbsp;2 <strong>Two fully trained loops against no looping at <span class="m
 <section id="against-the-untied-model" class="level3">
 <h3 class="anchored" data-anchor-id="against-the-untied-model">3.2 Against the Untied Model</h3>
 <p>The pairs let both models choose their size. A tighter test keeps everything else equal: the <em>untied model</em> is the same network with a separate copy of the recurrent block for each loop. For two loops it has about 1.5 times the parameters at the same compute per token. We train both at four sizes on the same tokens, about 18 tokens per parameter of the looped model, with three seeds each.</p>
-<div class="finding">
-<p><strong>Finding 2: Widened to about 80% of the untied model’s parameters, the looped model wins.</strong> With 15–22% more compute per token, it beats the untied model by 0.005–0.017 nats in all twelve seed pairs.</p>
-</div>
-<p>At the untied model’s width the looped model trails it by 0.009–0.017 nats; widening it reverses the gap at every size (<a href="#fig-twin-dense" class="quarto-xref">Fig.&nbsp;3</a>).</p>
+<p>At the untied model’s width the looped model trails it by 0.009–0.017 nats; widening it reverses the gap at every size (<a href="#fig-twin-dense" class="quarto-xref">Fig.&nbsp;3</a>). Widened to about 80% of the untied model’s parameters, for 15–22% more compute per token, it beats the untied model by 0.005–0.017 nats in all twelve seed pairs.</p>
 <div id="fig-twin-dense" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-twin-dense-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -622,8 +616,8 @@ Fig.&nbsp;3 <strong>With about 80% of the parameters and 15–22% more compute p
 </section>
 <section id="sec-moe" class="level2">
 <h2 class="anchored" data-anchor-id="sec-moe">4. Parameter Savings in Mixture-of-Experts Models</h2>
-<div class="results">
-<p><strong>Results.</strong> 1) A looped MoE model that shares its experts across its two passes matches its untied twin with 17% fewer parameters for 9% more compute per token. 2) A purely looped MoE model beats the twin with 11% fewer parameters for 18% more compute per token.</p>
+<div class="finding">
+<p><strong>Finding 2: The saving carries over to mixture-of-experts models.</strong> A looped MoE model that shares its experts across its two passes matches its untied twin with 17% fewer parameters for 9% more compute per token; a purely looped one beats the twin with 11% fewer parameters for 18% more compute per token.</p>
 </div>
 <section id="configurations" class="level3">
 <h3 class="anchored" data-anchor-id="configurations">4.1 Configurations</h3>
@@ -674,13 +668,7 @@ Tab.&nbsp;3 The MoE models: non-embedding parameters (in brackets, relative to t
 </section>
 <section id="results" class="level3">
 <h3 class="anchored" data-anchor-id="results">4.2 Results</h3>
-<div class="finding">
-<p><strong>Finding 1: Sharing the experts across loops saves 17% of the parameters at matched loss.</strong> The looped model with its own attention per pass matches the untied twin, at +0.0008 nats, for 9% more compute per token.</p>
-</div>
-<div class="finding">
-<p><strong>Finding 2: A purely looped MoE model beats its untied twin.</strong> With 11% fewer parameters and 18% more compute per token, it is 0.006 nats ahead.</p>
-</div>
-<p>As in dense models, a looped model with fewer parameters than its untied twin matches or beats it for some extra compute per token (<a href="#fig-twin-moe" class="quarto-xref">Fig.&nbsp;4</a>).</p>
+<p>Sharing the experts across the two passes saves 17% of the parameters at matched loss: the looped model with its own attention per pass matches the untied twin, at +0.0008 nats, for 9% more compute per token. The purely looped model, with 11% fewer parameters and 18% more compute per token, is 0.006 nats ahead. As in dense models, a looped model with fewer parameters than its untied twin matches or beats it for some extra compute per token (<a href="#fig-twin-moe" class="quarto-xref">Fig.&nbsp;4</a>).</p>
 <div id="fig-twin-moe" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-twin-moe-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -696,8 +684,8 @@ Fig.&nbsp;4 <strong>With 11–17% fewer parameters and 9–18% more compute per 
 <section id="sec-law" class="level2">
 <h2 class="anchored" data-anchor-id="sec-law">5. A Scaling Law for Looped Models</h2>
 <p>Why does looping twice save so much, and what do other loop settings save? A scaling law fitted to nearly 600 training runs answers both, by pricing every loop setting in effective parameters.</p>
-<div class="results">
-<p><strong>Results.</strong> A loop setting <span class="math inline">(T,B)</span> makes the looped block count <span class="math inline">g(T,B)</span> times in an effective parameter count. Fitted to nearly 600 training runs, <span class="math inline">g</span> saturates at about three copies of the block, and two fully trained loops are worth 1.91 copies.</p>
+<div class="finding">
+<p><strong>Finding 3: Two fully trained loops make the looped block worth 1.91 copies of itself.</strong> A loop setting <span class="math inline">(T,B)</span> makes the block count <span class="math inline">g(T,B)</span> times in an effective parameter count; fitted to nearly 600 training runs, <span class="math inline">g</span> saturates at about three copies however often the block loops.</p>
 </div>
 <section id="effective-parameters" class="level3">
 <h3 class="anchored" data-anchor-id="effective-parameters">5.1 Effective Parameters</h3>
@@ -820,10 +808,7 @@ Tab.&nbsp;5 Fit and holdout errors of the law: in-sample, and with one configura
 </figcaption>
 </figure>
 </div>
-<div class="finding">
-<p><strong>Finding 1: A shared block is worth at most about three copies of itself, and two fully trained loops are worth almost two.</strong> The ceiling <span class="math inline">e^{c}\approx3.0</span> bounds <span class="math inline">g</span> however often the block loops, and <span class="math inline">g(2,2)\approx1.91</span>.</p>
-</div>
-<p>The exponents add one more reading: since <span class="math inline">q&gt;p</span>, doubling the trained loops <span class="math inline">B</span> adds more than doubling the forward loops <span class="math inline">T</span>.</p>
+<p>A shared block is worth at most about three copies of itself, and two fully trained loops are worth almost two: the ceiling <span class="math inline">e^{c}\approx3.0</span> bounds <span class="math inline">g</span> however often the block loops, and <span class="math inline">g(2,2)\approx1.91</span>. The exponents add one more reading: since <span class="math inline">q&gt;p</span>, doubling the trained loops <span class="math inline">B</span> adds more than doubling the forward loops <span class="math inline">T</span>.</p>
 </section>
 <section id="compute" class="level3">
 <h3 class="anchored" data-anchor-id="compute">5.2 Compute</h3>
@@ -836,8 +821,8 @@ C\simeq6D\,N_{\text{comp}},\qquad N_{\text{comp}}=N_{\text{once}}+\frac{T+2B}{3}
 </section>
 <section id="sec-frontier" class="level2">
 <h2 class="anchored" data-anchor-id="sec-frontier">6. The Parameter–Compute Pareto Frontier</h2>
-<div class="results">
-<p><strong>Results.</strong> At the loss of the best model without loops, every loop setting costs extra training compute and saves parameters. Full BPTT forms the Pareto frontier. Two fully trained loops are its knee, saving 32% of the parameters for 3.1% more compute, and the saving saturates near one half.</p>
+<div class="finding">
+<p><strong>Finding 4: Two fully trained loops are the knee of the parameter–compute frontier.</strong> At the loss of the best model without loops, every loop setting costs extra training compute and saves parameters; two fully trained loops save 32% of the parameters for 3.1% more compute, and the saving saturates near one half.</p>
 </div>
 <p>At equal loss, every loop setting saves some parameters and costs some extra training compute, relative to the best model without loops. Figure 2 of our paper <span class="citation" data-cites="xiong2026truncate">[<a href="#ref-xiong2026truncate" role="doc-biblioref">2</a>]</span> plots the two for every setting, reproduced as <a href="#fig-free-size" class="quarto-xref">Fig.&nbsp;5</a>; the settings that save the most parameters for their compute form a Pareto frontier.</p>
 <p>With model size and tokens free, the price <span class="math inline">\chi</span> is all that separates a loop setting from the model without loops. Substituting <span class="math inline">N_{\text{comp}}=\chi N_{\text{eff}}</span> into (<a href="#eq-compute" class="quarto-xref">2</a>) gives <span class="math inline">C=6D\,\chi N_{\text{eff}}</span>: a loop setting buys the same pairs <span class="math inline">(N_{\text{eff}},D)</span> as a model without loops, at <span class="math inline">\chi</span> times the price. To match the loss of the compute-optimal model without loops, it must spend <span class="math inline">\chi</span> times its compute and reach the same effective size and tokens. Its trainable parameters are that effective size divided by <span class="math inline">G=N_{\text{eff}}/N</span>. Writing <span class="math inline">\rho=N_{\text{rec}}/N</span>, which is about one half in our models,</p>
@@ -858,17 +843,9 @@ Fig.&nbsp;5 <strong>The parameter–compute Pareto frontier, at the loss of the 
 </figcaption>
 </figure>
 </div>
-<div class="finding">
-<p><strong>Finding 1: A loop trades compute for parameters.</strong> Every loop setting needs more compute than the best model without loops, and every one buys a smaller model at the same loss.</p>
-</div>
-<p>Every setting has <span class="math inline">\chi\ge1</span>, so at a fixed compute the best model has no loop, as Schwethelm et al. <span class="citation" data-cites="schwethelm2026how">[<a href="#ref-schwethelm2026how" role="doc-biblioref">4</a>]</span> also find. What a loop offers instead is a discount on parameters, paid for in compute.</p>
-<div class="finding">
-<p><strong>Finding 2: Full BPTT is the frontier.</strong> For the same compute, every truncated setting saves fewer parameters than full BPTT.</p>
-</div>
-<p>Truncation pays for forward loops that carry no gradient, so its markers lie below the dashed curve of full BPTT.</p>
-<div class="finding">
-<p><strong>Finding 3: Two fully trained loops are the knee, and the saving saturates near one half.</strong> <span class="math inline">(2,2)</span> saves 32% of the parameters for 3.1% more compute; sixteen loops save 50% of the parameters for 334% more compute. The dense pairs of Section 3.1 measure this knee directly.</p>
-</div>
+<p>A loop trades compute for parameters: every loop setting needs more compute than the best model without loops, and every one buys a smaller model at the same loss. Every setting has <span class="math inline">\chi\ge1</span>, so at a fixed compute the best model has no loop, as Schwethelm et al. <span class="citation" data-cites="schwethelm2026how">[<a href="#ref-schwethelm2026how" role="doc-biblioref">4</a>]</span> also find; what a loop offers instead is a discount on parameters, paid for in compute.</p>
+<p>Full BPTT forms the frontier: for the same compute, every truncated setting saves fewer parameters, since truncation pays for forward loops that carry no gradient, and its markers lie below the dashed curve of full BPTT.</p>
+<p>Two fully trained loops are the knee: <span class="math inline">(2,2)</span> saves 32% of the parameters for 3.1% more compute, while sixteen loops save 50% of the parameters for 334% more compute. The dense pairs of Section 3.1 measure this knee directly.</p>
 <div id="tbl-frontier" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <div aria-describedby="tbl-frontier-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
