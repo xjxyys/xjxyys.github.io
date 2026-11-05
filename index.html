@@ -21,6 +21,7 @@
           <!-- <a href="#experience">Research</a> -->
           <a href="#education">Education</a>
           <a href="#publications">Publications</a>
+          <a href="#blog">Blog</a>
           <a href="#awards">Awards</a>
         </nav>
       </div>
@@ -49,7 +50,7 @@
             I am a first-year PhD student at <a href="https://mmlab.hk/">MMLab, The
             University of Hong Kong</a>, supervised by
             <a href="https://xh-liu.github.io/">Prof. Xihui Liu</a> and
-            <a href="https://luoping.me/">Prof. Ping Luo</a>. I am also a co-founder of
+            <a href="http://luoping.me/">Prof. Ping Luo</a>. I am also a co-founder of
             <a href="https://github.com/Interactive-Active-AI">Interactive &amp; Active AI (IAAI)</a>,
             which I am building together with friends.
           </p>
@@ -67,6 +68,7 @@
         <section id="news">
           <h2>News</h2>
           <ul class="dated-list">
+            <li><time datetime="2026-11">Nov. 2026</time><span>Wrote a blog post, <a href="blog/looping-twice/"><em>The Benefit of Looping Twice</em></a>: looping the middle layers twice saves about a third of the parameters for little added compute.</span></li>
             <li><time datetime="2026-10">Oct. 2026</time><span>Released <a href="https://interactive-active-ai.github.io/NextTransformer/"><em>NextTransformer</em></a>, an open framework and fair benchmark for next-generation Transformer architectures. <a href="https://github.com/Interactive-Active-AI/NextTransformer">Code</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/">Website</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/docs/">Docs</a></span></li>
             <li><time datetime="2026-10">Oct. 2026</time><span>Posted <em>Truncate or Not?</em> on arXiv. <a href="truncate-or-not/">Project page</a> · <a href="https://arxiv.org/abs/2610.26030">arXiv</a> · <a href="https://github.com/xjxyys/Truncate-or-Not">Code</a></span></li>
             <li><time datetime="2026-09">Sep. 2026</time><span><em>QTPT</em> was accepted to NeurIPS 2026.</span></li>
@@ -277,6 +279,27 @@
                 <p class="paper-links">
                   <a href="https://proceedings.neurips.cc/paper_files/paper/2025/hash/a9eef2d4f04e876674f4cb8f3c18bb52-Abstract-Conference.html">[paper]</a>
                   <a href="https://arxiv.org/abs/2510.19241">[arXiv]</a>
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="blog">
+          <h2>Blog</h2>
+          <div class="publication-list">
+            <article class="publication-item">
+              <a class="paper-visual" href="blog/looping-twice/" aria-label="Read the blog post The Benefit of Looping Twice">
+                <img src="blog/looping-twice/assets/hero.png" alt="A transformer without loops, 471M parameters, next to a looped transformer whose middle six layers run twice, 344M parameters: 27% fewer parameters" />
+                <span class="paper-tag">Blog 2026</span>
+              </a>
+              <div>
+                <h3><a href="blog/looping-twice/">The Benefit of Looping Twice: Parameter Savings with Little Added Compute</a></h3>
+                <p class="paper-summary">Looping the middle layers of a transformer twice reaches the same loss with about a third fewer parameters for a few percent more training compute, in dense and mixture-of-experts models; a scaling law fitted to nearly 600 runs shows why two loops are the sweet spot.</p>
+                <p class="venue-line">Nov. 2, 2026 · 15 min read</p>
+                <p class="paper-links">
+                  <a href="blog/looping-twice/">[read]</a>
+                  <a href="https://arxiv.org/abs/2610.26030">[arXiv]</a>
                 </p>
               </div>
             </article>

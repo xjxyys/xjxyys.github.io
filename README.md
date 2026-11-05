@@ -7,9 +7,10 @@ layout provided by the site owner.
 
 - Biography and contact links
 - News
-- Research experience
+- Industry experience (the research experience section is kept commented out in `index.html`)
 - Education
-- Selected publications
+- Selected publications and projects
+- Blog: one card per post, linking to the post under `blog/`
 - Awards and technical skills
 
 ## Preview
@@ -23,6 +24,9 @@ be published from the repository root with GitHub Pages.
 - `styles.css` - layout and colors
 - `assets/institutions/` - locally stored institution marks
 - `assets/papers/` - publication teaser and representative figures
+- `blog/<post>/` - each blog post as a self-contained rendered page; the homepage card uses the post's own cover
+  image (`blog/looping-twice/` is rendered from `blog/param-savings/` of `xjxyys/loop-scaling-fb`)
+- `truncate-or-not/` - the project page of the Truncate or Not? paper
 
 ## Institution assets
 
