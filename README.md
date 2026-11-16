@@ -26,6 +26,7 @@ be published from the repository root with GitHub Pages.
 - `assets/papers/` - publication teaser and representative figures
 - `blog/<post>/` - each blog post as a self-contained rendered page; the homepage card uses the post's own cover
   image (`blog/looping-twice/` is rendered from `blog/param-savings/` of `xjxyys/loop-scaling-fb`)
+- `blog/feedback-source/` - rendered source-depth post, with local figures, fonts and math assets
 - `truncate-or-not/` - the project page of the Truncate or Not? paper
 
 ## Institution assets

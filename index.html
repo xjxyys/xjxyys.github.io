@@ -68,6 +68,7 @@
         <section id="news">
           <h2>News</h2>
           <ul class="dated-list">
+            <li><time datetime="2026-11">Nov. 2026</time><span>Wrote <a href="blog/feedback-source/"><em>Don't feed back the last block</em></a>: a deep intermediate feedback source gives lower loss at the same parameter count and compute.</span></li>
             <li><time datetime="2026-11">Nov. 2026</time><span>Wrote a blog post, <a href="blog/looping-twice/"><em>The Benefit of Looping Twice</em></a>: looping the middle layers twice saves about a third of the parameters for little added compute.</span></li>
             <li><time datetime="2026-10">Oct. 2026</time><span>Released <a href="https://interactive-active-ai.github.io/NextTransformer/"><em>NextTransformer</em></a>, an open framework and fair benchmark for next-generation Transformer architectures. <a href="https://github.com/Interactive-Active-AI/NextTransformer">Code</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/">Website</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/docs/">Docs</a></span></li>
             <li><time datetime="2026-10">Oct. 2026</time><span>Posted <em>Truncate or Not?</em> on arXiv. <a href="truncate-or-not/">Project page</a> · <a href="https://arxiv.org/abs/2610.26030">arXiv</a> · <a href="https://github.com/xjxyys/Truncate-or-Not">Code</a></span></li>
@@ -288,6 +289,18 @@
         <section id="blog">
           <h2>Blog</h2>
           <div class="publication-list">
+            <article class="publication-item">
+              <a class="paper-visual" href="blog/feedback-source/" aria-label="Read the blog post Don't feed back the last block">
+                <img src="blog/feedback-source/assets/fig_wiring.png" alt="Feedback from the last block compared with feedback from a deep intermediate block" />
+                <span class="paper-tag">Blog 2026</span>
+              </a>
+              <div>
+                <h3><a href="blog/feedback-source/">Don't feed back the last block</a></h3>
+                <p class="paper-summary">In a sweep at two model sizes, a deep intermediate block provides the best feedback source at the same parameter count and compute. We explore why it may retain useful context while being less specialised for the output head.</p>
+                <p class="venue-line">Nov. 16, 2026 · 10 min read</p>
+                <p class="paper-links"><a href="blog/feedback-source/">[read]</a></p>
+              </div>
+            </article>
             <article class="publication-item">
               <a class="paper-visual" href="blog/looping-twice/" aria-label="Read the blog post The Benefit of Looping Twice">
                 <img src="blog/looping-twice/assets/hero.png" alt="A transformer without loops, 471M parameters, next to a looped transformer whose middle six layers run twice, 344M parameters: 27% fewer parameters" />
