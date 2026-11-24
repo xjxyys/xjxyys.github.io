@@ -7,7 +7,7 @@
   <meta name="description" content="Attention Latent Feedback (ALF) lets every sublayer of a transformer attend to the deeper outputs of the previous token. It trains in two parallel passes, decodes in one pass per token, and lowers held-out loss at every scale from MoE-1.6B to MoE-4.0B.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Attention Latent Feedback">
-  <meta property="og:description" content="Every sublayer reads the deeper layers of the previous token. Lower loss at every scale, ahead of final-state feedback, with about 1% extra decoding FLOPs.">
+  <meta property="og:description" content="An architecture where every sublayer attends over the previous token's outputs at and above its own depth. Lower loss at every scale, ahead of final-state feedback, with about 1% extra decoding FLOPs.">
   <meta property="og:url" content="https://xjxyys.github.io/attention-latent-feedback/">
   <meta property="og:image" content="https://xjxyys.github.io/attention-latent-feedback/static/images/fig_teaser.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -44,7 +44,6 @@
   <div class="container">
     <p class="eyebrow"><span>Latent feedback</span><span>attention over depth</span><span>single-pass decoding</span></p>
     <h1 class="title">Attention Latent Feedback</h1>
-    <p class="subtitle">Every sublayer reads the deeper layers of the previous token</p>
 
     <p class="authors">
       <span>Xuyuan Xiong<sup>1,*</sup></span>
@@ -121,7 +120,7 @@
 
     <div class="stats">
       <div class="stat"><span class="stat-num">0.022&ndash;0.024</span><span class="stat-label">nats lower held-out loss than the standard residual</span></div>
-      <div class="stat"><span class="stat-num">45.1&rarr;47.0</span><span class="stat-label">average accuracy (%) on 17 tasks, MoE-4.0B</span></div>
+      <div class="stat"><span class="stat-num">45.1&rarr;47.0</span><span class="stat-label">domain-balanced accuracy (%) over 17 tasks, MoE-4.0B</span></div>
       <div class="stat"><span class="stat-num">1.38&times;</span><span class="stat-label">baseline tokens needed to match its loss</span></div>
       <div class="stat"><span class="stat-num">~1.1%</span><span class="stat-label">extra decoding FLOPs per token</span></div>
     </div>
@@ -288,8 +287,8 @@
         <h4>Two passes in training, one in decoding</h4>
         <p>
           Training runs a plain pass and then a feedback pass that reads the first pass shifted by one position, both in
-          parallel over the sequence, during the last 25% of steps. Decoding caches the \(2L\) outputs of the previous
-          token, so each new token takes a single pass.
+          parallel over the sequence, during the last 25% of steps. Decoding caches the \(2L\) sublayer outputs and the
+          top-layer state of the previous token, so each new token takes a single pass.
         </p>
       </div>
     </div>
@@ -324,7 +323,8 @@
     <h2 class="section-title">Five findings</h2>
     <p class="section-lead">
       Mixture-of-experts models at three scales (MoE-1.6B, MoE-2.6B and MoE-4.0B) trained under the Marin recipe. FBT and
-      ALF branch from the same checkpoint at 75% of training and see the same data with the same two-pass schedule.
+      ALF branch from the same checkpoint at 75% of training and see the same data with the same two-pass schedule, with
+      FBT running the recipe that gives it its stronger held-out loss.
     </p>
 
     <article class="takeaway t-orange" id="finding-1">
@@ -340,9 +340,10 @@
             at every scale, and on MoE-1.6B it leads FBT in all six validation domains, from code and mathematics to web text.
           </p>
           <p>
-            The loss gains carry over to downstream tasks. On MoE-4.0B, ALF raises the average accuracy over seventeen tasks
-            from 45.1% to 47.0% and leads FBT in all four domains, <strong>with the largest gains in mathematics and reading
-            comprehension</strong>.
+            The loss gains carry over to downstream tasks. On MoE-4.0B, ALF raises the domain-balanced accuracy over
+            seventeen tasks from 45.1% to 47.0%, <strong>with the largest gains over the backbone in mathematics and
+            reading comprehension</strong>. It also leads FBT in all four domains, by the widest margins in reading
+            comprehension and commonsense reasoning.
           </p>
         </div>
         <div class="takeaway-side">
@@ -444,7 +445,9 @@
           <p>
             Across the three sizes, FBT needs 1.07&times; the training FLOPs of ALF to reach each ALF model's loss. When model
             size and unique tokens can both grow freely, spending the extra 25% on a larger single-pass backbone is
-            comparably efficient, so ALF pays off most where tokens, model size or inference cost are the binding constraint.
+            comparably efficient, so ALF pays off most where training tokens or model size are the binding constraint.
+            At decoding time its extra forward FLOPs are small, while reading the cached outputs at every sublayer raises
+            per-token memory traffic over final-state feedback, which is the main deployment tradeoff.
           </p>
         </div>
         <div class="takeaway-side">

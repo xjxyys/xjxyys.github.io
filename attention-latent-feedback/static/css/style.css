@@ -110,13 +110,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: #eef1f6; padding
   font-family: var(--serif);
   font-size: clamp(2.8rem, 7vw, 4.6rem);
   font-weight: 700; line-height: 1.04; letter-spacing: -0.02em;
-  color: var(--ink); margin: 0;
-}
-.subtitle {
-  font-family: var(--serif);
-  font-size: clamp(1.2rem, 2.6vw, 1.6rem);
-  font-weight: 500; color: var(--ink-2);
-  margin: 14px auto 30px; max-width: 760px; line-height: 1.35;
+  color: var(--ink); margin: 0 0 30px;
 }
 .authors {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 22px;
@@ -166,7 +160,7 @@ code { font-family: var(--mono); font-size: 0.88em; background: #eef1f6; padding
   color: var(--ink); margin: 0 0 14px; text-align: center;
 }
 .section-lead { text-align: center; color: var(--muted); max-width: 760px; margin: 0 auto 40px; font-size: 1.04rem; }
-.subtitle, .section-title, .section-lead, .takeaway h3, .stat-label { text-wrap: balance; }
+.section-title, .section-lead, .takeaway h3, .stat-label { text-wrap: balance; }
 
 /* ---------- TL;DR ---------- */
 #tldr { padding-top: 56px; }
