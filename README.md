@@ -28,6 +28,8 @@ be published from the repository root with GitHub Pages.
   image (`blog/looping-twice/` is rendered from `blog/param-savings/` of `xjxyys/loop-scaling-fb`)
 - `blog/feedback-source/` - rendered source-depth post, with local figures, fonts and math assets
 - `truncate-or-not/` - the project page of the Truncate or Not? paper
+- `attention-latent-feedback/` - the project page of the Attention Latent Feedback paper, with an animated
+  residual-flow diagram (`static/js/main.js`); its figures are rendered from the paper's PDF figures
 
 ## Institution assets
 

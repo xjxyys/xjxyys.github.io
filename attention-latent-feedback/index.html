@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attention Latent Feedback</title>
+  <meta name="description" content="Attention Latent Feedback (ALF) lets every sublayer of a transformer attend to the deeper outputs of the previous token. It trains in two parallel passes, decodes in one pass per token, and lowers held-out loss at every scale from MoE-1.6B to MoE-4.0B.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Attention Latent Feedback">
+  <meta property="og:description" content="Every sublayer reads the deeper layers of the previous token. Lower loss at every scale, ahead of final-state feedback, with about 1% extra decoding FLOPs.">
+  <meta property="og:url" content="https://xjxyys.github.io/attention-latent-feedback/">
+  <meta property="og:image" content="https://xjxyys.github.io/attention-latent-feedback/static/images/fig_teaser.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://xjxyys.github.io/attention-latent-feedback/">
+  <link rel="icon" type="image/svg+xml" href="static/images/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,500&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+  <link rel="stylesheet" href="static/css/style.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+  <script defer src="static/js/main.js"></script>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Sections">
+  <div class="topnav-inner">
+    <a class="brand" href="#top">Attention Latent Feedback</a>
+    <div class="navlinks">
+      <a href="#tldr">TL;DR</a>
+      <a href="#why">Motivation</a>
+      <a href="#flow">Residual flow</a>
+      <a href="#method">Method</a>
+      <a href="#findings">Findings</a>
+      <a href="#citation">Citation</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="container">
+    <p class="eyebrow"><span>Latent feedback</span><span>attention over depth</span><span>single-pass decoding</span></p>
+    <h1 class="title">Attention Latent Feedback</h1>
+    <p class="subtitle">Every sublayer reads the deeper layers of the previous token</p>
+
+    <p class="authors">
+      <span>Xuyuan Xiong<sup>1,*</sup></span>
+      <span>Siyu Chen<sup>2,*</sup></span>
+      <span>Mengzhao Chen<sup>1</sup></span>
+      <span>Yue Su<sup>1</sup></span>
+      <span>Zhuoran Yang<sup>2</sup></span>
+      <span>Ping Luo<sup>1,&dagger;</sup></span>
+      <span>Xihui Liu<sup>1,&dagger;</sup></span>
+    </p>
+    <p class="affiliations">
+      <span><sup>1</sup>MMLab, The University of Hong Kong</span>
+      <span><sup>2</sup>Yale University</span>
+    </p>
+    <p class="author-notes"><sup>*</sup>Equal contribution &emsp; <sup>&dagger;</sup>Corresponding authors</p>
+
+    <div class="logos">
+      <img src="static/images/logo_hku_mmlab.png" alt="HKU MMLab" class="logo-wide">
+      <img src="static/images/logo_hku.png" alt="The University of Hong Kong">
+      <img src="static/images/logo_yale.png" alt="Yale University">
+    </div>
+
+    <!-- Unversioned arXiv links resolve to the latest version. -->
+    <div class="links">
+      <a class="btn" href="https://arxiv.org/pdf/2611.31154">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        Paper
+      </a>
+      <a class="btn" href="https://arxiv.org/abs/2611.31154">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        arXiv
+      </a>
+      <a class="btn" href="https://github.com/xjxyys/ALF">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+        Code
+      </a>
+      <a class="btn" href="#citation">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h4v4H8a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V8a1 1 0 0 1 1-1zM15 7h4v4h-3a3 3 0 0 0 3 3v2a5 5 0 0 1-5-5V8a1 1 0 0 1 1-1z"/></svg>
+        BibTeX
+      </a>
+    </div>
+  </div>
+</header>
+
+<section class="teaser" aria-label="Overview figure">
+  <div class="container wide">
+    <figure class="figure figure-hero">
+      <img src="static/images/fig_teaser.png" width="2197" height="845" data-zoom
+           alt="Left: in Attention Latent Feedback, each sublayer at position t attends over the outputs of position t minus 1 from its own depth upward and mixes them into its input, while the projected final state of position t minus 1 is added to the embedding. Right: average downstream accuracy of MoE-4.0B, 45.1, 46.3 and 47.0 percent for the standard residual, FBT and ALF, and 45.7, 46.9 and 47.4 percent on the attention residual.">
+      <figcaption>
+        <strong>Attention Latent Feedback and downstream accuracy.</strong>
+        <b>(a)</b> Each sublayer uses attention (orange) to weight previous-position outputs from its own depth upward and
+        mix them with the current stream, while the projected top state enters the embedding sum.
+        <b>(b)</b> Domain-balanced accuracy on seventeen tasks for MoE-4.0B on a zoomed axis, comparing ALF with the
+        Full-bandwidth Transformer (FBT).
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="section" id="tldr">
+  <div class="container narrow">
+    <div class="tldr">
+      <span class="tldr-label">TL;DR</span>
+      <p>
+        When a language model decodes token \(t\), every layer of token \(t-1\) has already finished. Self-attention still
+        connects positions only at the same depth, so a shallow layer of the new token never sees the deeper states of the
+        previous one. <strong>Attention Latent Feedback (ALF)</strong> lets every sublayer attend to the outputs of the
+        previous token from its own depth upward and mix them into its input. It trains in two parallel passes, decodes in
+        <strong>one pass per token</strong>, and lowers held-out loss at every scale we train, ahead of feeding back only
+        the final state.
+      </p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="stat-num">0.022&ndash;0.024</span><span class="stat-label">nats lower held-out loss than the standard residual</span></div>
+      <div class="stat"><span class="stat-num">45.1&rarr;47.0</span><span class="stat-label">average accuracy (%) on 17 tasks, MoE-4.0B</span></div>
+      <div class="stat"><span class="stat-num">1.38&times;</span><span class="stat-label">baseline tokens needed to match its loss</span></div>
+      <div class="stat"><span class="stat-num">~1.1%</span><span class="stat-label">extra decoding FLOPs per token</span></div>
+    </div>
+
+    <details class="abstract">
+      <summary>Abstract</summary>
+      <p>
+        During autoregressive decoding, the deeper representations of the previous token have already been computed, yet
+        shallow layers at the current token cannot read them directly because standard self-attention connects positions
+        only at the same depth. We introduce Attention Latent Feedback (ALF), an architecture that allows every sublayer to
+        attend to the outputs of the deeper layers at the previous position. Training unrolls this cross-position
+        recurrence into two parallel passes, whereas decoding remains single-pass using cached previous-token states.
+        Across mixture-of-experts models with up to 4.0B parameters, ALF lowers held-out loss by 0.022&ndash;0.024 nats
+        over the standard residual with about 1.1% decoding FLOP overhead, and consistently outperforms prior final-state
+        feedback across all three scales on both standard and attention residual backbones. On MoE-1.6B, ALF matches a
+        1.38&times; larger baseline token budget, and on MoE-4.0B it lifts average accuracy across seventeen downstream
+        benchmarks from 45.1% to 47.0%. Analysis further reveals that intermediate and nearby deeper layers drive most of
+        this benefit, allowing a fixed nearest-window variant to retain 89%&ndash;94% of the gain at linear read cost while
+        learned attention widens its margin with scale.
+      </p>
+    </details>
+  </div>
+</section>
+
+<section class="section alt" id="why">
+  <div class="container">
+    <h2 class="section-title">Why read more than the final state</h2>
+    <p class="section-lead">
+      Earlier latent feedback hands the next token a single vector: the final state. That state is trained to produce the
+      next-token prediction, and the next position already receives that token as an embedding, so it can expose little of
+      the computation underneath.
+    </p>
+    <div class="takeaway-grid">
+      <div class="takeaway-text">
+        <p>
+          To test this, we swept the source block of an additive input feedback path on MoE-1.6B and MoE-2.6B, holding the
+          backbone, parameter count, FLOPs, checkpoint and data order fixed. In both models the best source is a deep
+          intermediate block, block 7 of 8 and block 8 of 10, which lowers held-out loss by <strong>0.0044 and 0.0041
+          nats</strong> relative to the final block. The shallowest sources are far worse, 0.0125 and 0.0067 nats above it.
+        </p>
+        <p>
+          Intermediate layers therefore carry signal that final-state feedback leaves unused, and the useful depth shifts
+          with the model. ALF removes the need to pick one source at all: every sublayer attends over the whole depth of the
+          previous token and weights it per token and per depth, so the useful layers are discovered during training rather
+          than chosen in advance (<a href="#finding-4">Finding 4</a>).
+        </p>
+        <p class="note">
+          Blog post: <a href="../blog/feedback-source/">Don't feed back the last block</a>, with the full sweep, the
+          per-domain breakdown and what the depth trend looks like across sizes.
+        </p>
+      </div>
+      <figure class="figure">
+        <img src="static/images/fig_source_depth.png" width="1101" height="728" loading="lazy" data-zoom
+             alt="Held-out loss change against the relative depth of the feedback source block, for MoE-1.6B and MoE-2.6B. Both curves fall from a high value at shallow sources to a minimum near 0.8 to 0.9 of the depth, then rise again at the final block.">
+        <figcaption>
+          <strong>The final block is not the best feedback source.</strong> Held-out loss at the third evaluation pass,
+          relative to reading the final block, as one block's state is projected and added to the next token's input.
+          Each point is one run.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="flow">
+  <div class="container wide">
+    <h2 class="section-title">Where the residual stream flows</h2>
+    <p class="section-lead">
+      Watch one decoding step of a small three-block model. Compare no feedback, the Full-bandwidth Transformer (FBT),
+      which feeds back only the final state, and ALF, on a standard residual stream or on Attention Residuals, where the
+      current stream is itself an attention over depth.
+    </p>
+
+    <div class="flow" id="flow-demo">
+      <div class="flow-bar">
+        <div class="flow-controls">
+          <div class="flow-ctl">
+            <span class="flow-ctl-label" id="flow-bb-label">Backbone</span>
+            <div class="seg" role="group" aria-labelledby="flow-bb-label">
+              <button type="button" data-backbone="std" aria-pressed="true">Standard residual</button>
+              <button type="button" data-backbone="attn" aria-pressed="false">Attention residual</button>
+            </div>
+          </div>
+          <div class="flow-ctl">
+            <span class="flow-ctl-label" id="flow-fb-label">Feedback</span>
+            <div class="seg" role="group" aria-labelledby="flow-fb-label">
+              <button type="button" data-mode="std" aria-pressed="false">None</button>
+              <button type="button" data-mode="fbt" aria-pressed="false">+ FBT</button>
+              <button type="button" data-mode="alf" aria-pressed="true">+ ALF</button>
+            </div>
+          </div>
+        </div>
+        <div class="flow-play">
+          <button type="button" class="icon-btn" id="flow-toggle">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-pause" d="M4 2h3v12H4zM9 2h3v12H9z"/><path class="i-play" d="M4 2l10 6-10 6z" hidden/></svg>
+            <span>Pause</span>
+          </button>
+          <button type="button" class="icon-btn" id="flow-restart">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1-5.6 3.9l1.9.7A4 4 0 1 0 8 4v2.5L4.5 3.2 8 0z"/></svg>
+            <span>Replay</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flow-stage">
+        <svg class="fl" id="flow-svg" viewBox="0 0 1000 620" role="img"
+             aria-label="Animated diagram of one decoding step: position t minus 1 on the left, position t on the right, each a column of sublayers on a residual stream; in ALF, every sublayer at position t attends over the cached outputs of position t minus 1 from its own depth upward."></svg>
+      </div>
+      <p class="flow-hint">Swipe the diagram sideways to see both positions.</p>
+      <div class="flow-progress" aria-hidden="true"><span id="flow-progress"></span></div>
+      <p class="flow-caption"><span class="flow-step" id="flow-step">Token t &minus; 1</span><span id="flow-text"></span></p>
+      <div class="flow-legend">
+        <span><i class="lg-cur"></i>current stream (residual)</span>
+        <span><i class="lg-alpha"></i>\(\alpha\): attention residual over the token's own outputs</span>
+        <span><i class="lg-fb"></i>feedback from token \(t-1\)</span>
+        <span><i class="lg-mix"></i>mixture at share \(\rho\)</span>
+        <span><i class="lg-sa"></i>self-attention, same depth only</span>
+      </div>
+      <p class="flow-note">
+        Schematic of decoding with cached states of token \(t-1\). Line widths of the feedback sketch the learned pattern
+        of the depth weights, which concentrate on each sublayer's own depth and the few just above it (Finding 4); the
+        widths of the \(\alpha\) arcs are illustrative as well.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="section alt" id="method">
+  <div class="container">
+    <h2 class="section-title">How ALF works</h2>
+    <p class="section-lead">
+      Each sublayer \(l\) draws on two streams. The <span class="c-blue">current stream</span> \(x_{t,l}\) is the input
+      that the backbone already gives it, and the <span class="c-orange">sublayer feedback</span> carries the outputs of
+      position \(t-1\) at depths \(i\ge l\), which position \(t\) has not computed yet.
+    </p>
+
+    <div class="eq-card">
+      \[h_{t,l}=(1-\rho_l)\,\textcolor{#3e6ca8}{x_{t,l}}+\rho_l\,c_{t,l}\sum_{i=l}^{2L}\textcolor{#a8672a}{\beta_{t,i\to l}}\,M_i\,\textcolor{#a8672a}{v_{t-1,i}},
+        \qquad x_{t,1}=e_t+W_E\,\mathrm{RMSNorm}(\textcolor{#a8672a}{z_{t-1}})\]
+      <p>The mixed input \(h_{t,l}\) replaces \(x_{t,l}\) as the input of sublayer \(l\). The second equation adds the projected final state of token \(t-1\) to the token embedding.</p>
+    </div>
+
+    <div class="method-grid">
+      <div class="mcard" style="--c: var(--orange-line)">
+        <span class="k c-orange">Sublayer feedback</span>
+        <h4>Attention over depth</h4>
+        <p>
+          Every output \(v_{t-1,i}\) of the previous position passes once through a low-rank map \(M_i=I+U_iD_i\) of rank 64.
+          A learned query per sublayer scores the mapped outputs with a softmax over depth (\(\beta\)), and a learned share
+          \(\rho_l\) mixes the result into the current stream.
+        </p>
+      </div>
+      <div class="mcard" style="--c: var(--purple-line)">
+        <span class="k c-purple">Input injection</span>
+        <h4>The final state, at the embedding</h4>
+        <p>
+          Following Recycler, a learned projection \(W_E\) of the previous final state \(z_{t-1}\) is added to the token
+          embedding. It carries the accumulated representation that produced the previous prediction, which the individual
+          sublayer outputs do not.
+        </p>
+      </div>
+      <div class="mcard" style="--c: var(--blue-line)">
+        <span class="k c-blue">Training and decoding</span>
+        <h4>Two passes in training, one in decoding</h4>
+        <p>
+          Training runs a plain pass and then a feedback pass that reads the first pass shifted by one position, both in
+          parallel over the sequence, during the last 25% of steps. Decoding caches the \(2L\) outputs of the previous
+          token, so each new token takes a single pass.
+        </p>
+      </div>
+    </div>
+
+    <div class="stack">
+      <figure class="figure">
+        <img src="static/images/fig_arch.png" width="2197" height="1052" loading="lazy" data-zoom
+             alt="Architecture comparison: the Full-bandwidth Transformer gates the last block's output of position t minus 1 into the embedding of position t; Attention Latent Feedback maps every output of position t minus 1 through M, lets each sublayer at position t attend over the outputs from its own depth upward, mixes them with the current stream at share rho, and adds the projected final state to the embedding.">
+        <figcaption>
+          <strong>From final-state feedback to attention over depth.</strong>
+          <b>(a)</b> FBT feeds the final state of position \(t-1\) back into the input of position \(t\) through a gate \(g\).
+          <b>(b)</b> In ALF, every sublayer at position \(t\) attends over the mapped outputs of position \(t-1\) from its own
+          depth upward (orange) and mixes them with the current stream (blue), while the input injection adds the projected
+          final state to the embedding.
+        </figcaption>
+      </figure>
+      <figure class="figure">
+        <img src="static/images/fig_passes.png" width="2197" height="808" loading="lazy" data-zoom
+             alt="Left: training with two parallel passes; pass 1 runs every step, pass 2 reads the shifted outputs of pass 1 in the last 25 percent of steps, and the two losses are summed. Right: decoding one token at a time, each token reading the cached outputs of the previous one.">
+        <figcaption>
+          <strong>Training in two parallel passes, decoding in one pass per token.</strong>
+          <b>(a)</b> Pass 1 is the plain backbone; pass 2 reads its outputs one position back, and both losses train the
+          model. <b>(b)</b> During decoding, the previous token's states are already cached, so the feedback is exact.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="findings">
+  <div class="container">
+    <h2 class="section-title">Five findings</h2>
+    <p class="section-lead">
+      Mixture-of-experts models at three scales (MoE-1.6B, MoE-2.6B and MoE-4.0B) trained under the Marin recipe. FBT and
+      ALF branch from the same checkpoint at 75% of training and see the same data with the same two-pass schedule.
+    </p>
+
+    <article class="takeaway t-orange" id="finding-1">
+      <header class="takeaway-head">
+        <span class="takeaway-num">Finding 1</span>
+        <h3>ALF lowers loss at every scale and stays ahead of final-state feedback</h3>
+      </header>
+      <div class="takeaway-grid">
+        <div class="takeaway-text">
+          <p>
+            On the standard residual, ALF lowers held-out loss by 0.024 nats on MoE-1.6B, and the gain holds at 0.023 and
+            0.022 nats on the two larger models. FBT also improves on the backbone, yet ALF stays at least 0.008 nats below it
+            at every scale, and on MoE-1.6B it leads FBT in all six validation domains, from code and mathematics to web text.
+          </p>
+          <p>
+            The loss gains carry over to downstream tasks. On MoE-4.0B, ALF raises the average accuracy over seventeen tasks
+            from 45.1% to 47.0% and leads FBT in all four domains, <strong>with the largest gains in mathematics and reading
+            comprehension</strong>.
+          </p>
+        </div>
+        <div class="takeaway-side">
+          <div class="dbars" role="img" aria-label="Accuracy gain over the standard residual on MoE-4.0B, FBT then ALF, in points: knowledge 0.6 and 0.8; reading comprehension 1.5 and 2.6; commonsense 0.1 and 1.1; mathematics 2.6 and 3.1; all domains 1.2 and 1.9.">
+            <p class="dbars-head"><b>Accuracy gain over the standard residual</b><span class="dbars-key"><span><i class="k-fbt"></i>+ FBT</span><span><i class="k-alf"></i>+ ALF</span></span></p>
+            <div class="drow"><span class="drow-name">Knowledge</span><div class="drow-bars"><div class="dbar fbt" style="--w: 17.1%"><span>+0.6</span></div><div class="dbar alf" style="--w: 22.9%"><span>+0.8</span></div></div></div>
+            <div class="drow"><span class="drow-name">Reading comprehension</span><div class="drow-bars"><div class="dbar fbt" style="--w: 42.9%"><span>+1.5</span></div><div class="dbar alf" style="--w: 74.3%"><span>+2.6</span></div></div></div>
+            <div class="drow"><span class="drow-name">Commonsense</span><div class="drow-bars"><div class="dbar fbt" style="--w: 2.9%"><span>+0.1</span></div><div class="dbar alf" style="--w: 31.4%"><span>+1.1</span></div></div></div>
+            <div class="drow"><span class="drow-name">Mathematics</span><div class="drow-bars"><div class="dbar fbt" style="--w: 74.3%"><span>+2.6</span></div><div class="dbar alf" style="--w: 88.6%"><span>+3.1</span></div></div></div>
+            <div class="drow total"><span class="drow-name">All domains</span><div class="drow-bars"><div class="dbar fbt" style="--w: 34.3%"><span>+1.2</span></div><div class="dbar alf" style="--w: 54.3%"><span>+1.9</span></div></div></div>
+            <p class="dbars-note">MoE-4.0B, accuracy points over the standard residual (45.1% on average).</p>
+          </div>
+        </div>
+      </div>
+      <figure class="figure figure-narrow">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Model</th><th>MoE-1.6B</th><th>MoE-2.6B</th><th>MoE-4.0B</th></tr>
+            </thead>
+            <tbody>
+              <tr class="group"><td colspan="4">Standard residual</td></tr>
+              <tr><td>Backbone</td><td>2.0577</td><td>1.9400</td><td>1.8456</td></tr>
+              <tr><td class="sub">+ FBT</td><td>2.0447</td><td>1.9261</td><td>1.8322</td></tr>
+              <tr class="ours"><td class="sub">+ ALF</td><td class="best">2.0333</td><td class="best">1.9170</td><td class="best">1.8238</td></tr>
+              <tr class="group"><td colspan="4">Attention residual</td></tr>
+              <tr><td>Backbone</td><td>2.0424</td><td>1.9244</td><td>1.8312</td></tr>
+              <tr><td class="sub">+ FBT</td><td>2.0336</td><td>1.9144</td><td>1.8227</td></tr>
+              <tr class="ours"><td class="sub">+ ALF</td><td class="best">2.0193</td><td class="best">1.9020</td><td class="best">1.8097</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <figcaption>
+          <strong>Held-out loss in nats per token</strong>, averaged over six Dolma 3 domains at the final checkpoint, with
+          three parallel evaluation passes for FBT and ALF.
+        </figcaption>
+      </figure>
+    </article>
+
+    <article class="takeaway t-purple" id="finding-2">
+      <header class="takeaway-head">
+        <span class="takeaway-num">Finding 2</span>
+        <h3>The gain carries over to attention residuals, and the sublayer feedback does most of the work</h3>
+      </header>
+      <div class="takeaway-grid">
+        <div class="takeaway-text">
+          <p>
+            Attention Residuals (AttnRes) already let each layer weight the earlier layers of its own position. ALF still
+            lowers their loss by margins close to those on the standard residual and widens its lead over FBT to at least
+            0.012 nats. On MoE-4.0B, it raises AttnRes's downstream accuracy by 1.7 points.
+          </p>
+          <p>
+            Testing each path alone on MoE-1.6B explains why. The sublayer feedback gives nearly the same gain on both
+            backbones and keeps 96% of ALF's gain on AttnRes, whereas the input injection alone keeps 49% there.
+            <strong>Once a backbone links every layer to its token input, reads at every sublayer carry almost all of the
+            remaining benefit.</strong>
+          </p>
+        </div>
+        <div class="takeaway-side">
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>MoE-1.6B, loss gain</th><th>Standard</th><th>Attention res.</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>+ Injection</td><td>0.0189</td><td>0.0113</td></tr>
+                <tr><td>+ Sublayer feedback</td><td>0.0224</td><td>0.0222</td></tr>
+                <tr class="ours"><td>+ ALF (both)</td><td class="best">0.0244</td><td class="best">0.0231</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note">Reduction in held-out loss (nats) over each backbone when only one path is trained, and with both.</p>
+        </div>
+      </div>
+      <figure class="figure">
+        <img src="static/images/fig_attnres_downstream.png" width="2197" height="818" loading="lazy" data-zoom
+             alt="Left: average accuracy against reference perplexity for the standard residual and attention residual backbones with FBT and ALF, ALF best on both. Right: accuracy gains on the attention residual per domain, ALF ahead of FBT in every domain and by 1.7 against 1.2 points on average.">
+        <figcaption>
+          <strong>ALF complements attention residuals on MoE-4.0B.</strong>
+          <b>(a)</b> Average accuracy against reference-answer perplexity for both backbones.
+          <b>(b)</b> Accuracy gain over the attention residual in each domain.
+        </figcaption>
+      </figure>
+    </article>
+
+    <article class="takeaway" id="finding-3">
+      <header class="takeaway-head">
+        <span class="takeaway-num">Finding 3</span>
+        <h3>At a fixed model size, ALF reaches the same loss with fewer tokens and less compute</h3>
+      </header>
+      <div class="takeaway-grid">
+        <div class="takeaway-text">
+          <p>
+            We trained the standard residual on MoE-1.6B at several token budgets and fitted a power law to its loss. To
+            match ALF, it needs 1.38&times; as many training tokens, so ALF saves 27% of the data. The second training pass
+            over the last quarter raises ALF's training FLOPs to 1.25&times; the backbone, which the token savings more than
+            cover: at equal loss, ALF still needs 1.10&times; less compute.
+          </p>
+          <p>
+            Across the three sizes, FBT needs 1.07&times; the training FLOPs of ALF to reach each ALF model's loss. When model
+            size and unique tokens can both grow freely, spending the extra 25% on a larger single-pass backbone is
+            comparably efficient, so ALF pays off most where tokens, model size or inference cost are the binding constraint.
+          </p>
+        </div>
+        <div class="takeaway-side">
+          <div class="side-card">
+            <p class="side-card-head">MoE-1.6B, matched loss</p>
+            <div class="meter">
+              <div class="meter-row"><b>Baseline tokens</b><span class="meter-track"><span style="--w: 100%"></span></span><span class="meter-val">1.38&times;</span></div>
+              <div class="meter-row"><b>ALF tokens</b><span class="meter-track"><span style="--w: 72.5%"></span></span><span class="meter-val">1&times;</span></div>
+              <div class="meter-row"><b>Baseline compute</b><span class="meter-track"><span style="--w: 100%"></span></span><span class="meter-val">1.38&times;</span></div>
+              <div class="meter-row"><b>ALF compute</b><span class="meter-track"><span style="--w: 90.6%"></span></span><span class="meter-val">1.25&times;</span></div>
+            </div>
+            <p class="side-card-note">In units of ALF's token budget and of the backbone's compute on it. ALF's second pass costs 1.25&times;, and 1.38 / 1.25 &asymp; 1.10.</p>
+          </div>
+        </div>
+      </div>
+      <div class="pair">
+        <figure class="figure">
+          <img src="static/images/fig_tokens.png" width="1100" height="664" loading="lazy" data-zoom
+               alt="Held-out loss against training tokens on MoE-1.6B for the standard residual, FBT and ALF; matching ALF's loss takes the baseline 1.38 times the tokens and matching FBT's takes 1.18 times.">
+          <figcaption><strong>Token efficiency on MoE-1.6B.</strong> The standard residual needs 1.38&times; the tokens to reach ALF's loss, against 1.18&times; for FBT.</figcaption>
+        </figure>
+        <figure class="figure">
+          <img src="static/images/fig_scaling.png" width="1100" height="716" loading="lazy" data-zoom
+               alt="Held-out loss against training FLOPs for FBT and ALF at MoE-1.6B, 2.6B and 4.0B; ALF lies below FBT at every size, a 1.07 times compute advantage.">
+          <figcaption><strong>Compute against FBT across scales.</strong> Loss against total training FLOPs, including each method's two-pass overhead.</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="takeaway t-orange" id="finding-4">
+      <header class="takeaway-head">
+        <span class="takeaway-num">Finding 4</span>
+        <h3>Sublayers read the nearby deeper layers of the previous token</h3>
+      </header>
+      <p class="takeaway-intro">
+        The learned depth weights form the same narrow diagonal band at all three sizes: most of the weight falls on a
+        sublayer's own depth and the next three deeper sublayers of the previous position. On MoE-4.0B, readers in the lower
+        half put 31% of their weight on the two nearest eligible outputs, where a uniform read would put 11%. Interventions on
+        the trained model agree. Keeping only the most useful middle block retains 40% of the sublayer feedback's
+        contribution, while the top quarter of blocks together retains 21%. <strong>Intermediate layers of the previous
+        token carry the strongest signal, and the final state alone leaves it out.</strong>
+      </p>
+      <figure class="figure">
+        <img src="static/images/fig_reads.png" width="2197" height="845" loading="lazy" data-zoom
+             alt="Mean depth weight of each reading sublayer over the source sublayers of the previous position, for MoE-1.6B, 2.6B and 4.0B; the weight concentrates in a narrow band just above the diagonal.">
+        <figcaption>
+          <strong>What the sublayer feedback reads.</strong> Learned attention maps over depth at the final checkpoints of
+          the three models on the standard residual. Each column gives one sublayer's mean weights over the outputs of the
+          previous position, and hatching marks sources outside its range. The dashed diagonal marks the lower boundary of
+          each sublayer's current and next three deeper sublayers, where most of the weight concentrates.
+        </figcaption>
+      </figure>
+      <p class="note"><a href="#why">Why read more than the final state</a> asks the matching question for a single
+        injected vector: which one block to read when only one is read. Both point at intermediate depths.</p>
+    </article>
+
+    <article class="takeaway t-purple" id="finding-5">
+      <header class="takeaway-head">
+        <span class="takeaway-num">Finding 5</span>
+        <h3>A fixed window of four nearby outputs keeps most of the gain at linear read cost</h3>
+      </header>
+      <div class="takeaway-grid">
+        <div class="takeaway-text">
+          <p>
+            The diagonal band suggests a cheaper variant. We replace the softmax over depth with an equal-weight average of
+            each sublayer's own output and the next three deeper ones, keeping the maps, shares and input injection. This
+            removes every depth query and cuts the cross-layer reads per token from quadratic to linear in depth.
+          </p>
+          <p>
+            The fixed window keeps 89% to 94% of ALF's loss reduction over the standard residual and stays ahead of FBT at
+            every scale. Its gap to learned attention grows with depth, from 0.0013 nats on MoE-1.6B to 0.0024 nats on
+            MoE-4.0B, so <strong>learned attention earns a growing share of the gain as models deepen.</strong>
+          </p>
+        </div>
+        <div class="takeaway-side">
+          <div class="side-card">
+            <p class="side-card-head">Fixed nearest-four window</p>
+            <div class="meter">
+              <div class="meter-row"><b>MoE-1.6B</b><span class="meter-track"><span style="--w: 94%"></span></span><span class="meter-val">94%</span></div>
+              <div class="meter-row"><b>MoE-2.6B</b><span class="meter-track"><span style="--w: 92%"></span></span><span class="meter-val">92%</span></div>
+              <div class="meter-row"><b>MoE-4.0B</b><span class="meter-track"><span style="--w: 89%"></span></span><span class="meter-val">89%</span></div>
+            </div>
+            <p class="side-card-note">Share of ALF's loss reduction kept. The window cuts cross-layer reads by 57%, 65% and 70% at the three sizes.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="section alt" id="citation">
+  <div class="container narrow">
+    <h2 class="section-title">Citation</h2>
+    <div class="codeblock">
+      <button type="button" class="copy-btn" data-copy-target="bibtex">Copy</button>
+<pre id="bibtex"><code>@misc{xiong2026alf,
+  title         = {{Attention Latent Feedback}},
+  author        = {Xuyuan Xiong and Siyu Chen and Mengzhao Chen and Yue Su and
+                   Zhuoran Yang and Ping Luo and Xihui Liu},
+  year          = {2026},
+  eprint        = {2611.31154},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://arxiv.org/abs/2611.31154}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>Attention Latent Feedback &middot; 2026</p>
+  </div>
+</footer>
+
+<div class="lightbox" id="lightbox" hidden>
+  <button type="button" class="lightbox-close" aria-label="Close">&times;</button>
+  <img alt="">
+</div>
+
+</body>
+</html>

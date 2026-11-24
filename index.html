@@ -68,6 +68,7 @@
         <section id="news">
           <h2>News</h2>
           <ul class="dated-list">
+            <li><time datetime="2026-11">Nov. 2026</time><span>Posted <em>Attention Latent Feedback</em> on arXiv: every sublayer reads the deeper layers of the previous token. <a href="attention-latent-feedback/">Project page</a> · <a href="https://arxiv.org/abs/2611.31154">arXiv</a></span></li>
             <li><time datetime="2026-11">Nov. 2026</time><span>Wrote <a href="blog/feedback-source/"><em>Don't feed back the last block</em></a>: a deep intermediate feedback source gives lower loss at the same parameter count and compute.</span></li>
             <li><time datetime="2026-11">Nov. 2026</time><span>Wrote a blog post, <a href="blog/looping-twice/"><em>The Benefit of Looping Twice</em></a>: looping the middle layers twice saves about a third of the parameters for little added compute.</span></li>
             <li><time datetime="2026-10">Oct. 2026</time><span>Released <a href="https://interactive-active-ai.github.io/NextTransformer/"><em>NextTransformer</em></a>, an open framework and fair benchmark for next-generation Transformer architectures. <a href="https://github.com/Interactive-Active-AI/NextTransformer">Code</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/">Website</a> · <a href="https://interactive-active-ai.github.io/NextTransformer/docs/">Docs</a></span></li>
@@ -170,6 +171,25 @@
         <section id="publications">
           <h2>Selected Publications &amp; Projects</h2>
           <div class="publication-list">
+            <article class="publication-item">
+              <a class="paper-visual" href="attention-latent-feedback/" aria-label="Open the Attention Latent Feedback project page">
+                <img src="attention-latent-feedback/static/images/fig_teaser.png" alt="Attention Latent Feedback: each sublayer attends over the deeper outputs of the previous position, next to downstream accuracy of MoE-4.0B" />
+                <span class="paper-tag">Preprint 2026</span>
+              </a>
+              <div>
+                <h3>Attention Latent Feedback</h3>
+                <p class="authors"><strong>Xuyuan Xiong<sup>*</sup></strong>, Siyu Chen<sup>*</sup>, Mengzhao Chen, Yue Su, Zhuoran Yang, Ping Luo, Xihui Liu</p>
+                <p class="equal-contribution"><sup>*</sup> Equal contribution</p>
+                <p class="paper-summary">Every sublayer attends to the deeper layers of the previous token, which lowers loss at every MoE scale from 1.6B to 4.0B while decoding stays one pass per token.</p>
+                <p class="venue-line">arXiv preprint, 2026</p>
+                <p class="paper-links">
+                  <a href="attention-latent-feedback/">[website]</a>
+                  <a href="https://arxiv.org/abs/2611.31154">[arXiv]</a>
+                  <a href="https://github.com/xjxyys/ALF">[code]</a>
+                </p>
+              </div>
+            </article>
+
             <article class="publication-item">
               <a class="paper-visual" href="https://interactive-active-ai.github.io/NextTransformer/" aria-label="Open the NextTransformer observatory">
                 <img src="assets/papers/nexttransformer.jpg" alt="NextTransformer: the Transformer observatory, toward the next generation of Transformers" />
